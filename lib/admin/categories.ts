@@ -56,7 +56,7 @@ export async function deleteCategory(id: string): Promise<boolean> {
 }
 
 // Obter todas as categorias (sem módulo)
-export async function getCategoriesByModule(): Promise<Category[]> {
+export async function getCategoriesByModule(module?: string): Promise<Category[]> {
     return getAllCategories();
 }
 

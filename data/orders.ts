@@ -6,12 +6,14 @@ export const orders: Order[] = [
         orderId: "LS2024001",
         items: [
             {
+                productId: "prod-1",
                 productName: "Camisa Flamengo I 2024",
                 variantSize: "M",
                 quantity: 1,
                 unitPrice: 299.90
             },
             {
+                productId: "prod-2",
                 productName: "Caneleira Nike Mercurial Lite",
                 variantSize: "M",
                 quantity: 1,
@@ -34,6 +36,7 @@ export const orders: Order[] = [
         orderId: "LS2024002",
         items: [
             {
+                productId: "prod-3",
                 productName: "Chuteira Nike Mercurial Vapor 15",
                 variantSize: "42",
                 quantity: 1,
@@ -56,6 +59,7 @@ export const orders: Order[] = [
         orderId: "LS2024003",
         items: [
             {
+                productId: "prod-4",
                 productName: "Camisa Seleção Brasileira I 2024",
                 variantSize: "G",
                 quantity: 2,
@@ -78,12 +82,14 @@ export const orders: Order[] = [
         orderId: "LS2024004",
         items: [
             {
+                productId: "prod-5",
                 productName: "Camisa Real Madrid I 2024",
                 variantSize: "M",
                 quantity: 1,
                 unitPrice: 349.90
             },
             {
+                productId: "prod-6",
                 productName: "Bola Nike Flight Brasileirão 2024",
                 variantSize: "Único",
                 quantity: 1,
@@ -105,12 +111,14 @@ export const orders: Order[] = [
         orderId: "LS2024005",
         items: [
             {
+                productId: "prod-7",
                 productName: "Chuteira Adidas Predator Elite",
                 variantSize: "40",
                 quantity: 1,
                 unitPrice: 1199.90
             },
             {
+                productId: "prod-8",
                 productName: "Luva de Goleiro Adidas Predator Pro",
                 variantSize: "9",
                 quantity: 1,
@@ -133,6 +141,7 @@ export const orders: Order[] = [
         orderId: "LS2024006",
         items: [
             {
+                productId: "prod-9",
                 productName: "Camisa Barcelona I 2024",
                 variantSize: "P",
                 quantity: 1,

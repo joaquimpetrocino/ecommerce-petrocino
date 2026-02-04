@@ -53,7 +53,7 @@ export async function deleteProduct(id: string): Promise<boolean> {
 }
 
 // Filtros específicos (sem módulo)
-export async function getProductsByModule(): Promise<Product[]> {
+export async function getProductsByModule(module?: string): Promise<Product[]> {
     await connectDB();
     const products = await ProductModel.find({ active: true }).lean();
     return products.map((p: any) => ({ ...p, id: p.id || p._id.toString() })) as unknown as Product[];

@@ -77,8 +77,8 @@ export async function updateOrderStatus(id: string, status: OrderStatus, notes?:
 
     revalidatePath("/admin/pedidos");
     revalidatePath("/admin/produtos"); // Invalidate products cache as stock changed
-    revalidateTag("products"); // Invalidate cache tag for products
-    revalidateTag("dashboard-stats"); // Invalidate dashboard stats
+    (revalidateTag as any)("products"); // Invalidate cache tag for products
+    (revalidateTag as any)("dashboard-stats"); // Invalidate dashboard stats
     return updatedOrder as unknown as Order;
 }
 

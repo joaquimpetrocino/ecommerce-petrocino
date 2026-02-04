@@ -26,7 +26,7 @@ export async function getAllQuestions(): Promise<ProductQuestion[]> {
 // Removido filtro por módulo
 
 // Versão cacheada para o dashboard
-export async function getCachedQuestionsByModule() {
+export async function getCachedQuestionsByModule(module?: string) {
     return unstable_cache(
         async () => getAllQuestions(),
         ["questions-list", "all"],

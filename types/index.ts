@@ -11,7 +11,7 @@ export interface Category {
 }
 
 export type VariantType = "roupa" | "calcado";
-export type OrderStatus = "pendente" | "confirmado" | "cancelado";
+export type OrderStatus = "pendente" | "confirmado" | "enviado" | "entregue" | "cancelado";
 
 // Cor do produto (para artigos esportivos)
 export interface ProductColor {
@@ -44,18 +44,19 @@ export interface Product {
   description: string;
   price: number;
   images: string[];
-  categories: string[]; // IDs/Slugs array
-  subCategories: string[]; // IDs/Slugs array
+  categories?: string[]; // IDs/Slugs array
+  subCategories?: string[]; // IDs/Slugs array
   category?: string; // Deprecated
   subCategory?: string; // Deprecated
   variants: ProductVariant[];
   featured: boolean;
-  active: boolean; // Controla visibilidade na loja
-  brands: string[]; // IDs array
-  models: string[]; // IDs array
+  active?: boolean; // Controla visibilidade na loja
+  brands?: string[]; // IDs array
+  models?: string[]; // IDs array
   brandId?: string; // Deprecated
   modelId?: string; // Deprecated
   colors?: ProductColor[]; // Cores disponíveis (apenas para sports)
+  module?: string; // Módulo ao qual o produto pertence (Ex: "sports", "automotive")
   automotiveFields?: AutomotiveFields; // Campos específicos para automotive
   allowCustomization?: boolean; // Permite personalização (nome/número)
   customizationPrice?: number; // Preço adicional pela personalização
@@ -124,10 +125,10 @@ export interface StoreConfig {
   storeComplement: string;
   logoUrl: string;
   whatsappNumber: string;
-    enableWhatsApp: boolean;
-    whatsappTemplate?: string;
-    whatsappRecoveryTemplate?: string;
-    updatedAt: number;
+  enableWhatsApp: boolean;
+  whatsappTemplate?: string;
+  whatsappRecoveryTemplate?: string;
+  updatedAt: number;
   hero: HeroConfig;
 }
 

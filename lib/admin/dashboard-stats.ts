@@ -47,7 +47,7 @@ async function fetchStats() {
 }
 
 // Wrapper com cache
-export async function getCachedDashboardStats() {
+export async function getCachedDashboardStats(module?: string) {
     return unstable_cache(
         () => fetchStats(),
         ["dashboard-stats"],
