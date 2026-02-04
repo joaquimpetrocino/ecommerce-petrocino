@@ -50,18 +50,32 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     const filteredProducts = products.filter((product: Product) => {
         // Validação da Categoria e Subcategoria
         let matchesCategory = true;
+
         if (subcategory) {
             // Se subcategoria selecionada, o produto deve estar nela
-            matchesCategory = product.category === subcategory;
+            const subCatObj = allCategories.find(c => c.slug === subcategory);
+            const subCatId = subCatObj ? subCatObj.id : subcategory;
+
+            matchesCategory = product.categories?.includes(subCatId) ||
+                product.subCategories?.includes(subCatId) ||
+                product.categories?.includes(subcategory) ||
+                false;
         } else if (category) {
             // Se apenas a categoria pai selecionada, mostrar produtos da pai + todas as filhas
             const parent = allCategories.find(c => c.slug === category);
-            const childrenSlugs = parent ? allCategories.filter(c => c.parentId === parent.id).map(c => c.slug) : [];
-            matchesCategory = product.category === category || childrenSlugs.includes(product.category);
+            if (parent) {
+                const childrenIds = allCategories.filter(c => c.parentId === parent.id).map(c => c.id);
+                const childrenSlugs = allCategories.filter(c => c.parentId === parent.id).map(c => c.slug);
+                const categoryMatchList = [parent.id, category, ...childrenIds, ...childrenSlugs];
+
+                matchesCategory = product.categories?.some(cat => categoryMatchList.includes(cat)) || false;
+            } else {
+                matchesCategory = product.categories?.includes(category) || false;
+            }
         }
 
-        const matchesBrand = !brand || product.brandId === brand;
-        const matchesModel = !model || product.modelId === model;
+        const matchesBrand = !brand || product.brands?.includes(brand) || false;
+        const matchesModel = !model || product.models?.includes(model) || false;
 
         const matchesSearch = !q ||
             product.name.toLowerCase().includes(q.toLowerCase()) ||
@@ -99,7 +113,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
                         {/* Products Grid - Force 2 cols on mobile */}
                         {filteredProducts.length > 0 ? (
-                            <ProductGrid products={filteredProducts} />
+                            <ProductGrid products={filteredProducts} categories={allCategories} />
                         ) : (
                             <div className="text-center py-20 bg-white rounded-xl border border-neutral-200 border-dashed">
                                 <div className="max-w-md mx-auto">

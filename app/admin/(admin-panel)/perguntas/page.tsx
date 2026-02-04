@@ -104,9 +104,63 @@ export default function QuestionsPage() {
         setDeleteDialog({ isOpen: true, id });
     };
 
-    const filteredQuestions = questions.filter(q =>
-        activeTab === "pending" ? q.status === "pending" : q.status === "approved"
-    );
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editReplyText, setEditReplyText] = useState("");
+
+    const handleUpdateStatus = async (id: string, status: "approved" | "rejected" | "pending") => {
+        setIsActionLoading(true);
+        try {
+            const res = await fetch("/api/admin/questions", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, status })
+            });
+
+            if (res.ok) {
+                toast.success(status === "approved" ? "Pergunta exibida!" : "Pergunta ocultada!");
+                await fetchQuestions();
+            } else {
+                toast.error("Erro ao atualizar status.");
+            }
+        } catch (error) {
+            console.error("Erro ao atualizar status:", error);
+            toast.error("Erro de conexão.");
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
+    const handleEditSave = async (id: string) => {
+        if (!editReplyText.trim()) return;
+        setSubmitting(true);
+
+        try {
+            const res = await fetch("/api/admin/questions", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, answer: editReplyText, status: "approved" })
+            });
+
+            if (res.ok) {
+                toast.success("Resposta atualizada!");
+                await fetchQuestions();
+                setEditingId(null);
+                setEditReplyText("");
+            } else {
+                toast.error("Erro ao atualizar resposta.");
+            }
+        } catch (error) {
+            console.error("Erro ao editar:", error);
+            toast.error("Erro de conexão.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const filteredQuestions = questions.filter(q => {
+        if (activeTab === "pending") return q.status === "pending";
+        return q.status === "approved" || q.status === "rejected"; // Mostrar rejeitadas na aba de respondidas
+    });
 
     const formatDate = (timestamp: number) => {
         return new Date(timestamp).toLocaleDateString("pt-BR", {
@@ -169,7 +223,7 @@ export default function QuestionsPage() {
                     </div>
                 ) : (
                     filteredQuestions.map((q) => (
-                        <div key={q.id} className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
+                        <div key={q.id} className={`bg-white rounded-xl border border-neutral-200 p-6 shadow-sm ${q.status === "rejected" ? "opacity-60 grayscale-[0.5]" : ""}`}>
                             <div className="flex flex-col md:flex-row gap-6">
                                 {/* Informações do Produto e Usuário */}
                                 <div className="md:w-1/4 space-y-3">
@@ -197,13 +251,16 @@ export default function QuestionsPage() {
                                             {formatDate(q.createdAt)}
                                         </div>
                                     </div>
+                                    {q.status === "rejected" && (
+                                        <span className="inline-block bg-red-100 text-red-600 text-[10px] font-bold uppercase py-1 px-2 rounded">Oculto</span>
+                                    )}
                                 </div>
 
                                 {/* Pergunta e Ação */}
                                 <div className="md:w-3/4 space-y-4">
                                     <div>
                                         <h3 className="text-sm font-bold text-neutral-500 uppercase mb-1">Pergunta do Cliente</h3>
-                                        <p className="text-lg text-neutral-900 font-medium bg-neutral-50 p-4 rounded-lg border border-neutral-100">
+                                        <p className="text-lg text-neutral-900 font-medium bg-neutral-50 p-4 rounded-lg border border-neutral-100 italic">
                                             "{q.question}"
                                         </p>
                                     </div>
@@ -258,20 +315,75 @@ export default function QuestionsPage() {
                                                         className="bg-white border border-red-200 text-red-600 hover:bg-red-50 px-6 py-2.5 rounded-lg font-heading font-bold uppercase text-sm flex items-center gap-2 transition-colors"
                                                     >
                                                         <X className="w-4 h-4" />
-                                                        Rejeitar
+                                                        Rejeitar / Excluir
                                                     </button>
                                                 </div>
                                             )}
                                         </div>
                                     ) : (
-                                        <div>
-                                            <h3 className="text-sm font-bold text-primary uppercase mb-1">Sua Resposta</h3>
-                                            <p className="text-neutral-700 bg-primary/5 p-4 rounded-lg border border-primary/10">
-                                                {q.answer}
-                                            </p>
-                                            <p className="text-xs text-neutral-400 mt-1 text-right">
-                                                Respondido em {formatDate(q.answeredAt || 0)}
-                                            </p>
+                                        <div className="space-y-3">
+                                            <div>
+                                                <h3 className="text-sm font-bold text-primary uppercase mb-1">Sua Resposta</h3>
+                                                {editingId === q.id ? (
+                                                    <div className="space-y-3">
+                                                        <textarea
+                                                            value={editReplyText}
+                                                            onChange={(e) => setEditReplyText(e.target.value)}
+                                                            className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none min-h-[100px]"
+                                                            autoFocus
+                                                        ></textarea>
+                                                        <div className="flex justify-end gap-2">
+                                                            <button
+                                                                onClick={() => setEditingId(null)}
+                                                                className="px-3 py-1.5 text-xs font-bold text-neutral-500 hover:bg-neutral-100 rounded transition-colors uppercase"
+                                                            >
+                                                                Cancelar
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleEditSave(q.id)}
+                                                                disabled={submitting}
+                                                                className="px-4 py-1.5 text-xs font-bold bg-primary text-white rounded hover:bg-primary-dark transition-colors uppercase"
+                                                            >
+                                                                {submitting ? "Salvando..." : "Salvar Alterações"}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-neutral-700 bg-primary/5 p-4 rounded-lg border border-primary/10">
+                                                            {q.answer}
+                                                        </p>
+                                                        <div className="flex items-center justify-between mt-2">
+                                                            <div className="flex gap-4">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingId(q.id);
+                                                                        setEditReplyText(q.answer || "");
+                                                                    }}
+                                                                    className="text-xs font-bold text-neutral-500 hover:text-primary flex items-center gap-1 transition-colors uppercase"
+                                                                >
+                                                                    Editar Resposta
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleUpdateStatus(q.id, q.status === "approved" ? "rejected" : "approved")}
+                                                                    className={`text-xs font-bold flex items-center gap-1 transition-colors uppercase ${q.status === 'approved' ? 'text-orange-600 hover:text-orange-700' : 'text-green-600 hover:text-green-700'}`}
+                                                                >
+                                                                    {q.status === "approved" ? "Ocultar do Site" : "Exibir no Site"}
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleReject(q.id)}
+                                                                    className="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors uppercase"
+                                                                >
+                                                                    Excluir Permanentemente
+                                                                </button>
+                                                            </div>
+                                                            <p className="text-[10px] text-neutral-400">
+                                                                Respondido em {formatDate(q.answeredAt || 0)}
+                                                            </p>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

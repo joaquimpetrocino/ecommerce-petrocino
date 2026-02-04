@@ -125,6 +125,20 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
         setTimeout(() => setAdded(false), 2000);
     };
 
+    const [allCategories, setAllCategories] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetch("/api/categories")
+            .then(res => res.json())
+            .then(data => setAllCategories(data))
+            .catch(err => console.error(err));
+    }, []);
+
+    const getCategoryName = (idOrSlug: string) => {
+        const cat = allCategories.find(c => c.id === idOrSlug || c.slug === idOrSlug);
+        return cat?.name || idOrSlug;
+    };
+
     return (
         <div className="min-h-screen bg-neutral-50 py-8">
             <div className="container mx-auto px-4 md:px-6 lg:px-8">
@@ -152,10 +166,17 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                         Esgotado
                                     </span>
                                 )}
-                                <span className="bg-primary text-white px-4 py-1.5 rounded-full text-[11px] uppercase tracking-wider font-body font-bold shadow-sm">
-                                    {product.category}
-                                </span>
-
+                                {product.categories && product.categories.length > 0 ? (
+                                    product.categories.map((cat, idx) => (
+                                        <span key={idx} className="bg-primary text-white px-4 py-1.5 rounded-full text-[11px] uppercase tracking-wider font-body font-bold shadow-sm">
+                                            {getCategoryName(cat)}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="bg-primary text-white px-4 py-1.5 rounded-full text-[11px] uppercase tracking-wider font-body font-bold shadow-sm">
+                                        {(product as any).category || "Produto"}
+                                    </span>
+                                )}
                             </div>
                             <h1 className="mb-4 font-heading font-bold text-neutral-900 text-4xl md:text-5xl uppercase tracking-tight leading-[0.9]">
                                 {product.name}
@@ -331,6 +352,15 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                             )}
                         </div>
                     </div>
+                </div>
+
+                {/* Seção de Perguntas */}
+                <div className="mt-16 border-t border-neutral-200 ">
+                    <ProductQA
+                        productId={product.id}
+                        productName={product.name}
+                        productImage={product.images?.[0] || ""}
+                    />
                 </div>
 
                 {/* Related Products */}

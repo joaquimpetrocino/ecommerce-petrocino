@@ -175,8 +175,34 @@ export default function AdminProductsPage() {
     const filteredProducts = products.filter((p) => {
         const matchesSearch = p.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
         const matchesStatus = filterStatus === "all" ? true : (filterStatus === "active" ? p.active : !p.active);
-        const matchesCategory = filterCategory === "all" ? true : p.category === filterCategory;
-        const matchesBrand = filterBrand === "all" ? true : p.brandId === filterBrand;
+
+        // Categoria (agora pode ser array e pode conter IDs ou Slugs)
+        let matchesCategory = true;
+        if (filterCategory !== "all") {
+            const catObj = categories.find(c => c.id === filterCategory || (c as any).slug === filterCategory);
+            const catId = catObj?.id || filterCategory;
+            const catSlug = (catObj as any)?.slug || filterCategory;
+
+            matchesCategory = p.categories?.includes(catId) ||
+                p.categories?.includes(catSlug) ||
+                p.subCategories?.includes(catId) ||
+                p.subCategories?.includes(catSlug) ||
+                (p as any).category === catId ||
+                (p as any).category === catSlug ||
+                false;
+        }
+
+        // Marca (agora pode ser array)
+        let matchesBrand = true;
+        if (filterBrand !== "all") {
+            const brandObj = brands.find(b => b.id === filterBrand);
+            const brandId = brandObj?.id || filterBrand;
+
+            matchesBrand = p.brands?.includes(brandId) ||
+                (p as any).brandId === brandId ||
+                p.brands?.includes(filterBrand) ||
+                false;
+        }
 
         const totalStock = p.variants.reduce((sum, v) => sum + v.stock, 0);
         const matchesInventory = filterInventory === "all" ? true :
@@ -198,6 +224,7 @@ export default function AdminProductsPage() {
     return (
         <div>
             {/* Header */}
+            {/* ... o código do header permanece o mesmo ... */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                 <div>
                     <h1 className="font-heading font-bold text-neutral-900 text-4xl uppercase tracking-tight">
@@ -216,6 +243,7 @@ export default function AdminProductsPage() {
             </div>
 
             {/* Filtros Avançados */}
+            {/* ... o código dos filtros permanece o mesmo ... */}
             <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm mb-6 space-y-4">
                 <div className="flex items-center gap-2 text-primary font-heading font-bold uppercase text-xs tracking-wider mb-2">
                     <Filter className="w-4 h-4" /> Filtros Avançados
@@ -439,9 +467,22 @@ export default function AdminProductsPage() {
                                                 )}
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className="inline-block bg-neutral-100 text-neutral-700 px-3 py-1 rounded-full text-xs font-body font-medium">
-                                                    {product.category}
-                                                </span>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {product.categories && product.categories.length > 0 ? (
+                                                        <>
+                                                            <span className="bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded text-[10px] font-body font-medium">
+                                                                {categories.find(c => c.id === product.categories![0] || (c as any).slug === product.categories![0])?.name || product.categories[0]}
+                                                            </span>
+                                                            {product.categories.length > 1 && (
+                                                                <span className="bg-neutral-800 text-white px-1.5 py-0.5 rounded text-[10px] font-body font-bold" title={product.categories.slice(1).map(id => categories.find(c => c.id === id || (c as any).slug === id)?.name || id).join(", ")}>
+                                                                    +{product.categories.length - 1}
+                                                                </span>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-neutral-400 text-xs italic">---</span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <p className="font-heading font-bold text-accent">

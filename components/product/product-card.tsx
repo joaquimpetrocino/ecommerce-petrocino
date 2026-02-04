@@ -8,42 +8,50 @@ import { formatPrice } from "@/lib/utils";
 
 interface ProductCardProps {
     product: Product;
+    categories?: any[];
 }
 
-const categoryLabels: Record<string, string> = {
-    // Esportes
-    camisas: "Camisa",
-    chuteiras: "Chuteira",
-    acessorios: "Acessório",
-    // Automotivo
-    motor: "Motor",
-    suspensao: "Suspensão",
-    freios: "Freios",
-    eletrica: "Elétrica",
-    carroceria: "Carroceria"
-};
 
 const IMAGE_FALLBACK = "/images/placeholder.png";
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, categories }: ProductCardProps) {
     const [imgSrc, setImgSrc] = useState(product.images[0]);
 
     const totalStock = product.variants.reduce((acc, variant) => acc + variant.stock, 0);
     const isOutOfStock = totalStock === 0;
 
+    const getCategoryName = (idOrSlug: string) => {
+        if (!categories) return idOrSlug;
+        const cat = categories.find(c => c.id === idOrSlug || c.slug === idOrSlug);
+        return cat?.name || idOrSlug;
+    };
+
     return (
         <Link href={`/produtos/${product.slug}`}>
             <div className={`group relative overflow-hidden rounded-xl border border-neutral-200 bg-white transition-all duration-250 hover:shadow-2xl hover:-translate-y-1 cursor-pointer ${isOutOfStock ? "opacity-75 grayscale" : ""}`}>
                 {/* Badges */}
-                <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-2 pr-12">
+                <div className="absolute left-3 top-3 z-10 flex flex-wrap gap-1 pr-12">
                     {isOutOfStock && (
                         <span className="bg-red-600 text-white px-3 py-1 rounded-full text-[10px] uppercase tracking-tighter font-body font-bold shadow-md animate-pulse">
                             Esgotado
                         </span>
                     )}
-                    <span className="bg-primary text-white px-3 py-1 rounded-full text-[10px] uppercase tracking-tighter font-body font-bold shadow-md">
-                        {(product.category && categoryLabels[product.category]) || product.category || "Produto"}
-                    </span>
+                    {product.categories && product.categories.length > 0 ? (
+                        <>
+                            <span className="bg-primary text-white px-3 py-1 rounded-full text-[10px] uppercase tracking-tighter font-body font-bold shadow-md">
+                                {getCategoryName(product.categories[0])}
+                            </span>
+                            {product.categories.length > 1 && (
+                                <span className="bg-neutral-800 text-white px-2 py-1 rounded-full text-[10px] uppercase tracking-tighter font-body font-bold shadow-md">
+                                    +{product.categories.length - 1}
+                                </span>
+                            )}
+                        </>
+                    ) : (
+                        <span className="bg-primary text-white px-3 py-1 rounded-full text-[10px] uppercase tracking-tighter font-body font-bold shadow-md">
+                            Produto
+                        </span>
+                    )}
                 </div>
 
                 {/* Image */}
