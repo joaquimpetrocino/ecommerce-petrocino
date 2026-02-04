@@ -19,10 +19,11 @@ export function Header() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [storeInfo, setStoreInfo] = useState<{
         storeName: string;
-        logoUrl?: string; // Adicionado logoUrl opcional
+        logoUrl?: string;
     }>({
-        storeName: "LeagueSports"
+        storeName: "LeagueSports" // Valor inicial seguro
     });
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         // Atualizar contagem do carrinho
@@ -30,24 +31,32 @@ export function Header() {
             setCartCount(getCartItemCount());
         };
 
+        const loadData = async () => {
+            try {
+                const [categoriesRes, configRes] = await Promise.all([
+                    fetch("/api/categories"),
+                    fetch("/api/config")
+                ]);
+
+                if (categoriesRes.ok) {
+                    const data = await categoriesRes.json();
+                    const navbarCategories = data.filter((cat: Category) => cat.showInNavbar).slice(0, 3);
+                    setCategories(navbarCategories);
+                }
+
+                if (configRes.ok) {
+                    const data = await configRes.json();
+                    setStoreInfo(data);
+                }
+            } catch (err) {
+                console.error("Erro ao carregar dados do header:", err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         updateCount();
-
-        // Carregar categorias do módulo ativo
-        fetch("/api/categories")
-            .then((res) => res.json())
-            .then((data) => {
-                const navbarCategories = data.filter((cat: Category) => cat.showInNavbar).slice(0, 3);
-                setCategories(navbarCategories);
-            })
-            .catch((err) => console.error("Erro ao carregar categorias:", err));
-
-        // Carregar informações da loja
-        fetch("/api/config")
-            .then((res) => res.json())
-            .then((data) => {
-                setStoreInfo(data);
-            })
-            .catch((err) => console.error("Erro ao carregar config:", err));
+        loadData();
 
         // Listener para mudanças no localStorage
         window.addEventListener("storage", updateCount);
@@ -78,7 +87,9 @@ export function Header() {
             <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6 lg:px-8">
                 {/* Logo Dinâmica */}
                 <Link href="/" className="flex items-center gap-3 group">
-                    {storeInfo.logoUrl ? (
+                    {isLoading ? (
+                        <div className="h-8 w-48 bg-neutral-200 animate-pulse rounded" />
+                    ) : storeInfo.logoUrl ? (
                         <div className="relative h-20 w-auto">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
@@ -96,27 +107,38 @@ export function Header() {
 
                 {/* Navigation */}
                 <nav className="hidden md:flex items-center gap-8">
-                    <Link
-                        href="/"
-                        className="font-body font-medium text-neutral-900 hover:text-primary transition-colors"
-                    >
-                        Início
-                    </Link>
-                    <Link
-                        href="/produtos"
-                        className="font-body font-medium text-neutral-900 hover:text-primary transition-colors"
-                    >
-                        Produtos
-                    </Link>
-                    {categories.map((category) => (
-                        <Link
-                            key={category.id}
-                            href={`/produtos?category=${category.slug}`}
-                            className="font-body font-medium text-neutral-900 hover:text-primary transition-colors capitalize"
-                        >
-                            {category.name}
-                        </Link>
-                    ))}
+                    {isLoading ? (
+                        <>
+                            <div className="h-5 w-16 bg-neutral-200 animate-pulse rounded" />
+                            <div className="h-5 w-20 bg-neutral-200 animate-pulse rounded" />
+                            <div className="h-5 w-24 bg-neutral-200 animate-pulse rounded" />
+                            <div className="h-5 w-16 bg-neutral-200 animate-pulse rounded" />
+                        </>
+                    ) : (
+                        <>
+                            <Link
+                                href="/"
+                                className="font-body font-medium text-neutral-900 hover:text-primary transition-colors"
+                            >
+                                Início
+                            </Link>
+                            <Link
+                                href="/produtos"
+                                className="font-body font-medium text-neutral-900 hover:text-primary transition-colors"
+                            >
+                                Produtos
+                            </Link>
+                            {categories.map((category) => (
+                                <Link
+                                    key={category.id}
+                                    href={`/produtos?category=${category.slug}`}
+                                    className="font-body font-medium text-neutral-900 hover:text-primary transition-colors capitalize"
+                                >
+                                    {category.name}
+                                </Link>
+                            ))}
+                        </>
+                    )}
                 </nav>
 
                 {/* Cart Button */}

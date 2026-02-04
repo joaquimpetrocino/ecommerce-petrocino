@@ -72,7 +72,8 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
-    const [storeName, setStoreName] = useState("Carregando...");
+    const [storeName, setStoreName] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchConfig = () => {
@@ -81,7 +82,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 .then(data => {
                     setStoreName(data.storeName || "Loja Virtual");
                 })
-                .catch(() => setStoreName("Loja Virtual"));
+                .catch(() => setStoreName("Loja Virtual"))
+                .finally(() => setIsLoading(false));
         };
 
         fetchConfig();
@@ -110,9 +112,13 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </button>
 
                 <Link href="/admin" className="block">
-                    <div className="text-3xl font-heading font-bold text-primary uppercase tracking-tighter truncate">
-                        {storeName}
-                    </div>
+                    {isLoading ? (
+                        <div className="h-8 w-3/4 bg-neutral-200 animate-pulse rounded" />
+                    ) : (
+                        <div className="text-3xl font-heading font-bold text-primary uppercase tracking-tighter truncate">
+                            {storeName}
+                        </div>
+                    )}
                     <p className="text-xs text-neutral-600 font-body mt-1">Painel Admin</p>
                 </Link>
 
