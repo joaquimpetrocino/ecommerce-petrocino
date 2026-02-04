@@ -32,7 +32,7 @@ export default function SubcategoriesPage() {
         description: "",
         active: true,
         showInNavbar: true,
-        parentId: "", 
+        parentId: "",
         parentIds: [] as string[],
     });
 
@@ -89,7 +89,7 @@ export default function SubcategoriesPage() {
 
             setShowForm(false);
             setEditingId(null);
-            setFormData({ name: "", slug: "", description: "", active: true, showInNavbar: true, parentId: "" });
+            setFormData({ name: "", slug: "", description: "", active: true, showInNavbar: true, parentId: "", parentIds: [] });
             fetchCategories();
         } catch (error) {
             toast.error("Ocorreu um erro ao salvar a subcategoria.");
@@ -209,8 +209,8 @@ export default function SubcategoriesPage() {
 
     const filteredSubcategories = parentFilter === "all"
         ? subcategories
-        : subcategories.filter(s => 
-            (s.parentIds && s.parentIds.includes(parentFilter)) || 
+        : subcategories.filter(s =>
+            (s.parentIds && s.parentIds.includes(parentFilter)) ||
             s.parentId === parentFilter
         );
 
@@ -235,7 +235,7 @@ export default function SubcategoriesPage() {
                         onClick={() => {
                             setShowForm(true);
                             setEditingId(null);
-                            setFormData({ name: "", slug: "", description: "", active: true, showInNavbar: true, parentId: "" });
+                            setFormData({ name: "", slug: "", description: "", active: true, showInNavbar: true, parentId: "", parentIds: [] });
                         }}
                         className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-heading font-bold uppercase transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
                     >
