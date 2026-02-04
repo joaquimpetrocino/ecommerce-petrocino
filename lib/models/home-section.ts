@@ -9,11 +9,6 @@ const HomeSectionSchema = new Schema({
         enum: ["featured", "category", "cta"]
     },
     productIds: [{ type: String }], // Array de IDs de produtos
-    module: {
-        type: String,
-        required: true,
-        enum: ["sports", "automotive"]
-    },
     description: { type: String },
     buttonText: { type: String },
     ctaLink: { type: String },

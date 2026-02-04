@@ -9,12 +9,8 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const module = searchParams.get("module") as any;
-
-    let products = module
-        ? await getCachedProductsByModule(module)
-        : await getAllProducts();
+    // Unified: ignore module param and return cached all products
+    const products = await getCachedProductsByModule();
 
     return NextResponse.json(products);
 }

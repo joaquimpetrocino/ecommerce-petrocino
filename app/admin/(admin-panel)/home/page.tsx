@@ -3,16 +3,12 @@
 import { useState, useEffect } from "react";
 import { Plus, Edit, Trash2, GripVertical, Eye, EyeOff, ArrowUp, ArrowDown, Image as ImageIcon } from "lucide-react";
 import type { HomeSection } from "@/lib/admin/home-sections";
-import { StoreModule } from "@/types";
 import { toast } from "sonner";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Modal } from "@/components/ui/modal";
 import { UploadDropzone } from "@/lib/uploadthing";
 
 export default function HomeSectionsPage() {
-    const [currentModule, setCurrentModule] = useState<StoreModule>("sports");
-    const [moduleName, setModuleName] = useState("Carregando...");
-    const [storeConfig, setStoreConfig] = useState<any>(null);
 
     const [sections, setSections] = useState<HomeSection[]>([]);
     const [products, setProducts] = useState<any[]>([]);
@@ -32,22 +28,13 @@ export default function HomeSectionsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("/api/admin/store-config")
-            .then(res => res.json())
-            .then(config => {
-                setStoreConfig(config);
-                setCurrentModule(config.module);
-                setModuleName(config.module === "sports" ? "Artigos Esportivos" : "Peças Automotivas");
-                setLoading(false);
-            });
+        setLoading(false);
+        fetchSections();
+        fetchProducts();
+        fetchCategories();
+        fetchBrands();
+        fetchModels();
     }, []);
-
-    // Atualiza module name
-    useEffect(() => {
-        if (storeConfig) {
-            setModuleName(currentModule === "sports" ? "Artivos Esportivos" : "Peças Automotivas");
-        }
-    }, [currentModule, storeConfig]);
 
     const [formData, setFormData] = useState<Partial<HomeSection>>({
         type: "featured",
@@ -61,7 +48,6 @@ export default function HomeSectionsPage() {
         buttonText: "",
         ctaLink: "",
         backgroundImage: "",
-        module: currentModule,
     });
 
     // CTA Link Builder State
@@ -124,11 +110,6 @@ export default function HomeSectionsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [filterCategory, setFilterCategory] = useState("");
 
-    // Effect to update formData module when currentModule changes
-    useEffect(() => {
-        setFormData(prev => ({ ...prev, module: currentModule }));
-    }, [currentModule]);
-
     // Effect to reset search and filter terms when the form is hidden
     useEffect(() => {
         if (!showForm) {
@@ -141,29 +122,28 @@ export default function HomeSectionsPage() {
         if (!loading) {
             fetchSections();
             fetchProducts();
-            fetchProducts();
             fetchCategories();
             fetchBrands();
             fetchModels();
         }
-    }, [currentModule, loading]);
+    }, [loading]);
 
 
 
     const fetchSections = async () => {
-        const res = await fetch(`/api/admin/home-sections?module=${currentModule}`);
+        const res = await fetch(`/api/admin/home-sections`);
         const data = await res.json();
         setSections(data);
     };
 
     const fetchProducts = async () => {
-        const res = await fetch(`/api/admin/products?module=${currentModule}`);
+        const res = await fetch(`/api/admin/products`);
         const data = await res.json();
         setProducts(data);
     };
 
     const fetchCategories = async () => {
-        const res = await fetch(`/api/admin/categories?module=${currentModule}`);
+        const res = await fetch(`/api/admin/categories`);
         const data = await res.json();
         setCategories(data);
     };
@@ -227,7 +207,6 @@ export default function HomeSectionsPage() {
             buttonText: "",
             ctaLink: "",
             backgroundImage: "",
-            module: currentModule,
         });
         setSearchTerm("");
         setFilterCategory("");
@@ -323,10 +302,30 @@ export default function HomeSectionsPage() {
 
     return (
         <div className="space-y-6 pb-20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="font-heading font-bold text-neutral-900 text-4xl uppercase tracking-tight">
+                        Seções da Home
+                    </h1>
+                    <p className="text-neutral-500 font-body mt-1">
+                        Gerencie os grids de produtos e CTAs intermediários
+                    </p>
+                </div>
+                <button
+                    onClick={() => {
+                        setShowForm(true);
+                        setEditingId(null);
+                        resetForm();
+                    }}
+                    className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-heading font-bold uppercase flex items-center justify-center gap-2 transition-colors shrink-0"
+                >
+                    <Plus className="w-5 h-5" />
+                    Nova Seção
+                </button>
+            </div>
 
 
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 mt-4 gap-4">
+            {/* <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 mt-4 gap-4">
                 <div className="flex-1">
                     <h2 className="font-heading font-bold text-neutral-900 text-2xl uppercase tracking-tight leading-tight">
                         Outras Seções da Home
@@ -346,7 +345,7 @@ export default function HomeSectionsPage() {
                     <Plus className="w-5 h-5" />
                     Nova Seção
                 </button>
-            </div>
+            </div> */}
 
             {/* Form Modal */}
             <Modal

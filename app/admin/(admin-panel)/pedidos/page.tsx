@@ -8,12 +8,12 @@ import { Order, OrderStatus } from "@/types";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { formatPrice } from "@/lib/utils";
 
+import { AlertDialog } from "@/components/ui/alert-dialog";
+
 const statusTabs: { value: OrderStatus | "todos"; label: string }[] = [
     { value: "todos", label: "Todos" },
     { value: "pendente", label: "Pendentes" },
     { value: "confirmado", label: "Confirmados" },
-    { value: "enviado", label: "Enviados" },
-    { value: "entregue", label: "Entregues" },
     { value: "cancelado", label: "Cancelados" },
 ];
 
@@ -23,6 +23,11 @@ export default function AdminOrdersPage() {
     const [activeTab, setActiveTab] = useState<OrderStatus | "todos">("todos");
     const [searchTerm, setSearchTerm] = useState("");
     const [loading, setLoading] = useState(true);
+    const [deleteDialog, setDeleteDialog] = useState<{ isOpen: boolean; id: string | null }>({
+        isOpen: false,
+        id: null
+    });
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchOrders = async () => {
         setLoading(true);
@@ -65,22 +70,31 @@ export default function AdminOrdersPage() {
         setFilteredOrders(result);
     }, [activeTab, searchTerm, orders]);
 
-    const handleDelete = async (e: React.MouseEvent, id: string) => {
+    const handleDeleteClick = (e: React.MouseEvent, id: string) => {
         e.preventDefault();
-        if (!confirm("Tem certeza que deseja excluir este pedido?")) return;
+        setDeleteDialog({ isOpen: true, id });
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteDialog.id) return;
+        setIsDeleting(true);
 
         try {
-            const res = await fetch(`/api/admin/orders/${id}`, {
+            const res = await fetch(`/api/admin/orders/${deleteDialog.id}`, {
                 method: "DELETE",
             });
             if (res.ok) {
                 fetchOrders(); // Reload list
+                toast.success("Pedido excluído com sucesso");
             } else {
                 toast.error("Erro ao excluir pedido");
             }
         } catch (error) {
             console.error("Erro ao excluir:", error);
             toast.error("Erro ao excluir pedido");
+        } finally {
+            setIsDeleting(false);
+            setDeleteDialog({ isOpen: false, id: null });
         }
     };
 
@@ -210,13 +224,13 @@ export default function AdminOrdersPage() {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
                                                 <Link href={`/admin/pedidos/${order.id}`}>
-                                                    <button className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Ver Detalhes">
+                                                    <button className="p-2 text-neutral-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Ver Detalhes">
                                                         <Eye className="w-5 h-5" />
                                                     </button>
                                                 </Link>
                                                 <button
-                                                    onClick={(e) => handleDelete(e, order.id)}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                                    onClick={(e) => handleDeleteClick(e, order.id)}
+                                                    className="p-2 text-neutral-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                                     title="Excluir"
                                                 >
                                                     <Trash className="w-5 h-5" />
@@ -230,6 +244,16 @@ export default function AdminOrdersPage() {
                     </table>
                 </div>
             </div>
+
+            <AlertDialog
+                isOpen={deleteDialog.isOpen}
+                onClose={() => setDeleteDialog({ isOpen: false, id: null })}
+                onConfirm={handleConfirmDelete}
+                title="Excluir Pedido?"
+                description="Tem certeza que deseja excluir este pedido? Esta ação não pode ser desfeita."
+                isLoading={isDeleting}
+                variant="danger"
+            />
         </div>
     );
 }

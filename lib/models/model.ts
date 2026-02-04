@@ -5,11 +5,6 @@ const ModelSchema = new Schema({
     name: { type: String, required: true },
     slug: { type: String, required: true },
     brandId: { type: String, required: true }, // Referência ao ID da marca
-    module: {
-        type: String,
-        required: false,
-        enum: ["sports", "automotive"]
-    },
     active: { type: Boolean, default: true }
 }, {
     timestamps: true

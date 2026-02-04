@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ProductGallery } from "@/components/product/product-gallery";
 import { VariantSelector } from "@/components/product/variant-selector";
@@ -20,6 +20,13 @@ interface ProductDetailsProps {
 
 export function ProductDetails({ product, relatedProducts, complementaryProducts }: ProductDetailsProps) {
     const [selectedSize, setSelectedSize] = useState<string>("");
+    
+    // Logic color (debounced)
+    const [selectedColor, setSelectedColor] = useState<string>("");
+    // Visual color (immediate)
+    const [visualColor, setVisualColor] = useState<string>("");
+    const colorTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     const [quantity, setQuantity] = useState(1);
     const [added, setAdded] = useState(false);
 
@@ -27,11 +34,44 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
     const [customName, setCustomName] = useState("");
     const [customNumber, setCustomNumber] = useState("");
 
-    // Estoque Dinâmico
-    const selectedVariant = product.variants.find(v => v.size === selectedSize);
-    const availableStock = selectedVariant ? selectedVariant.stock : 0;
-
     const router = useRouter();
+
+    const hasColors = product.colors && product.colors.length > 0;
+
+    // Handle Color Selection with Debounce
+    const handleColorSelect = (color: string) => {
+        setVisualColor(color);
+        
+        if (colorTimeoutRef.current) {
+            clearTimeout(colorTimeoutRef.current);
+        }
+
+        colorTimeoutRef.current = setTimeout(() => {
+            setSelectedColor(color);
+        }, 300); // 300ms debounce
+    };
+
+    // Filter variants based on selected color (if applicable)
+    const availableVariants = product.variants.filter(v => {
+        if (hasColors && selectedColor) {
+            return v.color === selectedColor;
+        }
+        return true;
+    });
+
+    // Determine available sizes based on selected color
+    // If color selected: show sizes for that color
+    // If no color selected (but has colors): show all unique sizes (or disable?)
+    // Requirement: Mandatory to choose color.
+    // Better UX: Show colors. When color selected, show available sizes.
+
+    const selectedVariant = product.variants.find(v => {
+        const sizeMatch = v.size === selectedSize;
+        const colorMatch = hasColors ? v.color === selectedColor : true;
+        return sizeMatch && colorMatch;
+    });
+
+    const availableStock = selectedVariant ? selectedVariant.stock : 0;
 
     // Reset quantity if it exceeds available stock when size changes
     useEffect(() => {
@@ -40,15 +80,30 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
         }
     }, [selectedSize, availableStock]);
 
+    // Reset size when color changes (optional, but good if sizes differ per color)
+    useEffect(() => {
+        if (hasColors) {
+            setSelectedSize("");
+        }
+    }, [selectedColor, hasColors]);
+
 
     const totalStock = product.variants.reduce((acc, v) => acc + v.stock, 0);
     const isOutOfStock = totalStock === 0;
+
+    // Determine if customization is enabled for this specific variant configuration
+    const isCustomizationEnabled = selectedVariant?.allowCustomization ?? false;
 
     // Calculate final price with customization
     const hasCustomization = (customName.length > 0 || customNumber.length > 0);
     const finalPrice = product.price + (hasCustomization ? (product.customizationPrice || 0) : 0);
 
     const handleAddToCart = () => {
+        if (hasColors && !selectedColor) {
+            toast.error("Por favor, selecione uma cor");
+            return;
+        }
+        
         if (!selectedSize && !isOutOfStock) {
             toast.error("Por favor, selecione um tamanho");
             return;
@@ -59,7 +114,8 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
             selectedSize,
             quantity,
             hasCustomization ? customName : undefined,
-            hasCustomization ? customNumber : undefined
+            hasCustomization ? customNumber : undefined,
+            hasColors ? selectedColor : undefined
         );
 
         // Disparar evento customizado
@@ -99,11 +155,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                 <span className="bg-primary text-white px-4 py-1.5 rounded-full text-[11px] uppercase tracking-wider font-body font-bold shadow-sm">
                                     {product.category}
                                 </span>
-                                {product.league && (
-                                    <span className="bg-accent text-white px-4 py-1.5 rounded-full text-[11px] uppercase tracking-wider font-body font-bold shadow-sm">
-                                        {product.league}
-                                    </span>
-                                )}
+
                             </div>
                             <h1 className="mb-4 font-heading font-bold text-neutral-900 text-4xl md:text-5xl uppercase tracking-tight leading-[0.9]">
                                 {product.name}
@@ -130,26 +182,25 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                         </div>
 
                         {/* Cores Disponíveis */}
-                        {product.colors && product.colors.length > 0 && (
+                        {hasColors && (
                             <div className="border-t border-neutral-200 pt-6">
                                 <h2 className="mb-4 font-heading font-bold text-neutral-900 uppercase tracking-wide text-sm flex items-center gap-2">
                                     Cores Disponíveis
                                 </h2>
                                 <div className="flex flex-wrap gap-3">
-                                    {product.colors.map((color, index) => (
-                                        <div
+                                    {product.colors!.map((color, index) => (
+                                        <button
                                             key={index}
-                                            className="group flex flex-col items-center gap-2"
+                                            onClick={() => handleColorSelect(color.name)}
+                                            className={`group flex flex-col items-center gap-2 relative ${visualColor === color.name ? 'ring-2 ring-primary ring-offset-2 rounded-full' : ''}`}
                                             title={color.name}
                                         >
                                             <div
                                                 className="w-10 h-10 rounded-full border border-neutral-200 shadow-sm transition-transform group-hover:scale-110"
                                                 style={{ backgroundColor: color.hex }}
                                             />
-                                            <span className="text-[10px] font-body text-neutral-500 uppercase font-medium">
-                                                {color.name}
-                                            </span>
-                                        </div>
+                                            
+                                        </button>
                                     ))}
                                 </div>
                             </div>
@@ -158,15 +209,20 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                         {/* Seletor de Variantes */}
                         {!isOutOfStock && (
                             <div className="border-t border-neutral-200 pt-6">
-                                <VariantSelector
-                                    variants={product.variants || []}
-                                    onSelect={setSelectedSize}
-                                />
+                                {hasColors && !selectedColor ? (
+                                    <p className="text-sm text-neutral-500 italic">Selecione uma cor para ver os tamanhos disponíveis.</p>
+                                ) : (
+                                    <VariantSelector
+                                        variants={availableVariants}
+                                        onSelect={setSelectedSize}
+                                        selectedSize={selectedSize}
+                                    />
+                                )}
                             </div>
                         )}
 
                         {/* Customization Inputs */}
-                        {!isOutOfStock && product.allowCustomization && (
+                        {!isOutOfStock && isCustomizationEnabled && (
                             <div className="border-t border-neutral-200 pt-6">
                                 <h2 className="mb-4 font-heading font-bold text-neutral-900 uppercase tracking-wide text-sm flex items-center gap-2">
                                     Personalize sua Camisa
@@ -273,53 +329,17 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                     )}
                                 </button>
                             )}
-
                         </div>
                     </div>
                 </div>
-
-                {/* Seção de Perguntas e Respostas */}
-                <ProductQA
-                    productId={product.id}
-                    productName={product.name}
-                    productImage={product.images?.[0] || ""}
-                />
-
-                {/* Seção de Conversão Cruzada */}
-                {complementaryProducts.length > 0 && (
-                    <section className="mt-20 pt-16 border-t border-neutral-200">
-                        <div className="mb-10">
-                            <div className="inline-flex items-center gap-2 bg-accent/10 px-3 py-1.5 rounded-full mb-3">
-                                <Sparkles className="w-4 h-4 text-accent" />
-                                <span className="text-xs font-body font-semibold text-accent uppercase">Aumente seu Kit</span>
-                            </div>
-                            <h2 className="font-heading font-bold text-3xl md:text-4xl uppercase tracking-tight text-neutral-900 mb-2">
-                                Quem Comprou Isso, Também{" "}
-                                <span className="text-accent">Levou</span>
-                            </h2>
-                            <p className="text-neutral-600 font-body text-lg">
-                                Complete seu kit com produtos complementares
-                            </p>
-                        </div>
-                        <ProductGrid products={complementaryProducts} />
-                    </section>
-                )}
-
-                {/* Produtos Relacionados */}
-                {relatedProducts.length > 0 && (
-                    <section className="mt-20 pt-16 border-t border-neutral-200">
-                        <div className="mb-10">
-                            <h2 className="font-heading font-bold text-3xl md:text-4xl uppercase tracking-tight text-neutral-900 mb-2">
-                                Produtos{" "}
-                                <span className="text-accent">Relacionados</span>
-                            </h2>
-                            <p className="text-neutral-600 font-body text-lg">
-                                Outras opções que você pode gostar
-                            </p>
-                        </div>
-                        <ProductGrid products={relatedProducts} />
-                    </section>
-                )}
+                
+                {/* Related Products */}
+                <div className="mt-20">
+                    <h2 className="text-3xl font-heading font-bold text-neutral-900 mb-8 uppercase tracking-tight">
+                        Produtos Relacionados
+                    </h2>
+                    <ProductGrid products={relatedProducts} />
+                </div>
             </div>
         </div>
     );

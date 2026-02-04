@@ -2,7 +2,7 @@ import { getStoreConfig } from "@/lib/admin/store-config";
 
 export default async function TermsOfServicePage() {
     const config = await getStoreConfig();
-    const storeName = config.module === "sports" ? "LeagueSports" : "AutoParts Online";
+    const storeName = config.storeName || "Loja Virtual";
     const fullAddress = `${config.storeAddress}${config.storeNumber ? `, ${config.storeNumber}` : ""}${config.storeComplement ? ` - ${config.storeComplement}` : ""}`;
 
     return (

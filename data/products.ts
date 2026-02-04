@@ -13,7 +13,7 @@ export const products: Product[] = [
             "/images/flamengo_camisa_1769881653584.png"
         ],
         category: "camisas",
-        league: "brasileirao",
+        
         variants: [
             { size: "P", stock: 15 },
             { size: "M", stock: 20 },
@@ -34,7 +34,7 @@ export const products: Product[] = [
             "/images/corinthians_camisa_1769881667607.png"
         ],
         category: "camisas",
-        league: "brasileirao",
+        
         variants: [
             { size: "P", stock: 12 },
             { size: "M", stock: 25 },
@@ -55,7 +55,7 @@ export const products: Product[] = [
             "/images/palmeiras_camisa_1769881680747.png"
         ],
         category: "camisas",
-        league: "brasileirao",
+        
         variants: [
             { size: "P", stock: 10 },
             { size: "M", stock: 15 },
@@ -78,7 +78,7 @@ export const products: Product[] = [
             "/images/real_madrid_camisa_1769881694246.png"
         ],
         category: "camisas",
-        league: "champions",
+        
         variants: [
             { size: "P", stock: 8 },
             { size: "M", stock: 18 },
@@ -99,7 +99,7 @@ export const products: Product[] = [
             "/images/barcelona_camisa_1769881707885.png"
         ],
         category: "camisas",
-        league: "champions",
+        
         variants: [
             { size: "P", stock: 10 },
             { size: "M", stock: 20 },
@@ -122,7 +122,7 @@ export const products: Product[] = [
             "/images/brasil_camisa_1769881733519.png"
         ],
         category: "camisas",
-        league: "selecoes",
+        
         variants: [
             { size: "P", stock: 20 },
             { size: "M", stock: 30 },
@@ -143,7 +143,7 @@ export const products: Product[] = [
             "/images/argentina_camisa_1769881748935.png"
         ],
         category: "camisas",
-        league: "selecoes",
+        
         variants: [
             { size: "P", stock: 12 },
             { size: "M", stock: 22 },
@@ -237,7 +237,7 @@ export const products: Product[] = [
             "/images/bola_brasileirao_1769881803821.png"
         ],
         category: "acessorios",
-        league: "brasileirao",
+        
         variants: [
             { size: "Único", stock: 50 }
         ],

@@ -6,22 +6,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Plus, Images, Loader2 } from "lucide-react";
-import { Product, ProductVariant, Category, League, StoreModule, ProductColor, AutomotiveFields } from "@/types";
+import { Product, ProductVariant, Category, ProductColor, AutomotiveFields } from "@/types";
 import { toast } from "sonner";
 import { UploadDropzone } from "@/lib/uploadthing";
+import { MultiSelectSearch } from "./multi-select-search";
 
 const productSchema = z.object({
     name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
     slug: z.string().min(3, "Slug deve ter pelo menos 3 caracteres"),
     description: z.string().min(10, "Descrição deve ter pelo menos 10 caracteres"),
     price: z.number().min(0, "Preço deve ser maior que zero"),
-    category: z.string().min(1, "Categoria é obrigatória"),
-    subCategory: z.string().optional(),
-    league: z.string().optional(),
-    brandId: z.string().optional(),
-    modelId: z.string().optional(),
+    categories: z.array(z.string()).min(1, "Selecione pelo menos uma categoria"),
+    subCategories: z.array(z.string()).optional(),
+    brands: z.array(z.string()).optional(),
+    models: z.array(z.string()).optional(),
     featured: z.boolean(),
-    module: z.enum(["sports", "automotive"]),
     allowCustomization: z.boolean().optional(),
     customizationPrice: z.number().min(0).optional(),
 });
@@ -46,12 +45,12 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         product?.automotiveFields || {}
     );
 
-    // Selected Module (Type of product)
-    const [selectedModule, setSelectedModule] = useState<StoreModule>(product?.module || "sports");
+// Selected Module (Type of product) - somente para UI
+type ModuleOption = "sports" | "automotive";
+const [selectedModule, setSelectedModule] = useState<ModuleOption>("sports");
 
     // Metadata State
     const [allCategories, setAllCategories] = useState<Category[]>([]);
-    const [leagues, setLeagues] = useState<League[]>([]);
     const [allBrands, setAllBrands] = useState<any[]>([]);
     const [models, setModels] = useState<any[]>([]);
 
@@ -72,43 +71,43 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                 slug: product.slug,
                 description: product.description,
                 price: product.price,
-                category: product.category,
-                subCategory: product.subCategory || "",
-                league: product.league,
-                brandId: product.brandId,
-                modelId: product.modelId,
+                categories: product.categories || (product.category ? [product.category] : []),
+                subCategories: product.subCategories || (product.subCategory ? [product.subCategory] : []),
+                brands: product.brands || (product.brandId ? [product.brandId] : []),
+                models: product.models || (product.modelId ? [product.modelId] : []),
                 featured: product.featured,
-                module: product.module as "sports" | "automotive",
                 allowCustomization: product.allowCustomization || false,
                 customizationPrice: product.customizationPrice || 0,
             }
             : {
-                module: "sports",
                 allowCustomization: false,
                 customizationPrice: 0,
                 featured: false,
-                category: "",
-                subCategory: "",
+                categories: [],
+                subCategories: [],
+                brands: [],
+                models: [],
             },
     });
 
-    const currentBrandId = watch("brandId");
-    const currentCategoryId = watch("category");
+    const currentBrands = watch("brands");
+    const currentCategories = watch("categories");
     const allowCustomization = watch("allowCustomization");
 
     // Fetch Metadata (Categories, Leagues, Brands)
+    // Fetch Metadata (Categories, Leagues, Brands, Models)
     useEffect(() => {
         const fetchMetadata = async () => {
             try {
-                const [catsRes, leaguesRes, brandsRes] = await Promise.all([
+                const [catsRes, brandsRes, modelsRes] = await Promise.all([
                     fetch(`/api/admin/categories`),
-                    fetch(`/api/admin/leagues`),
-                    fetch(`/api/admin/brands`)
+                    fetch(`/api/admin/brands`),
+                    fetch(`/api/admin/models`)
                 ]);
 
                 if (catsRes.ok) setAllCategories(await catsRes.json());
-                if (leaguesRes.ok) setLeagues(await leaguesRes.json());
                 if (brandsRes.ok) setAllBrands(await brandsRes.json());
+                if (modelsRes.ok) setModels(await modelsRes.json());
 
             } catch (error) {
                 console.error("Erro ao carregar metadados:", error);
@@ -118,56 +117,51 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         fetchMetadata();
     }, []);
 
-    // Filtered Metadata based on module
-    // Main categories are those without parentId
-    const categories = allCategories.filter(c => (!selectedModule || c.module === selectedModule) && !c.parentId);
-    const filteredLeagues = leagues.filter(l => l.module === "sports");
+    // Updated Metadata Logic for Multi-Select
+    // Parent Categories (No parentId)
+    const parentCategories = allCategories
+        .filter(c => !c.parentId);
 
-    // Brands should be unified or filtered if they have a specific module
-    const brands = allBrands.filter(b => !b.module || b.module === "unified" || (!selectedModule || b.module === selectedModule));
+    // Subcategories: Filtered by selected Parent Categories
+    const availableSubCategories = currentCategories && currentCategories.length > 0
+        ? allCategories.filter(c => {
+            const parents = c.parentIds || (c.parentId ? [c.parentId] : []);
+            return parents.some(pid => currentCategories.includes(pid));
+        })
+        : [];
 
-    // Filter subcategories based on currentCategoryId (which is a slug)
-    // A subcategory is a category with a parentId
-    const selectedParent = allCategories.find(c => c.slug === currentCategoryId);
-    const subCategories = allCategories.filter(c => c.parentId && c.parentId === selectedParent?.id);
+    // Brands: Show ALL brands
+    const availableBrands = allBrands;
 
-    // Reset subcategory if it doesn't belong to the NEWly selected category
+    // Models: Filtered by Selected Brands OR Show All if none selected
+    const availableModels = currentBrands && currentBrands.length > 0
+        ? models.filter(m => currentBrands.includes(m.brandId))
+        : models;
+
+
+    // Reset subcategories if they don't belong to the NEWly selected categories
     useEffect(() => {
-        const sub = watch("subCategory");
-        if (sub && !subCategories.find(s => s.slug === sub)) {
-            setValue("subCategory", "");
+        // Only run this logic if we have loaded the categories
+        if (allCategories.length === 0) return;
+
+        const currentSubs = watch("subCategories") || [];
+        
+        if (currentSubs.length > 0) {
+             const validSubs = currentSubs.filter(subId => availableSubCategories.some(s => s.id === subId));
+             if (validSubs.length !== currentSubs.length) {
+                 setValue("subCategories", validSubs);
+             }
         }
-    }, [currentCategoryId, subCategories, setValue, watch]);
+    }, [currentCategories, availableSubCategories, setValue, watch, allCategories]);
 
-    // Fetch Models when Brand changes
-    useEffect(() => {
-        const fetchModels = async () => {
-            if (!currentBrandId) {
-                setModels([]);
-                return;
-            }
-            try {
-                // Models API also needs to be unified or we just pass the brandId
-                const res = await fetch(`/api/admin/models?brandId=${currentBrandId}`);
-                if (res.ok) {
-                    setModels(await res.json());
-                }
-            } catch (error) {
-                console.error("Erro ao buscar modelos:", error);
-            }
-        };
 
-        fetchModels();
-    }, [currentBrandId]);
-
-    const handleModuleChange = (module: StoreModule) => {
+    const handleModuleChange = (module: ModuleOption) => {
         setSelectedModule(module);
-        setValue("module", module as "sports" | "automotive");
-        // Reset category if it doesn't belong to the new module
-        setValue("category", "");
-        setValue("subCategory", "");
-        setValue("brandId", "");
-        setValue("modelId", "");
+        // We don't necessarily need to reset metadata anymore as they are global
+        // But maybe cleaner to reset if switching context drastically?
+        // User said: "o resto das coisas n precisa cadastrar modulo algum".
+        // keeping values might be confusing if they picked "Gol" and switched to "Sports".
+        // But maybe acceptable. I'll keep them to avoid data loss annoyance.
     };
 
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,9 +193,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     };
 
     // Variants Helpers
-    const handleAddVariant = () => setVariants([...variants, { size: "", stock: 0 }]);
+    const handleAddVariant = () => setVariants([...variants, { size: "", stock: 0, color: "", allowCustomization: false }]);
     const handleRemoveVariant = (index: number) => setVariants(variants.filter((_, i) => i !== index));
-    const handleVariantChange = (index: number, field: keyof ProductVariant, value: string | number) => {
+    const handleVariantChange = (index: number, field: keyof ProductVariant, value: string | number | boolean) => {
         const newVariants = [...variants];
         newVariants[index] = { ...newVariants[index], [field]: value };
         setVariants(newVariants);
@@ -219,12 +213,26 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
     const onFormSubmit = async (data: ProductFormData) => {
         setLoading(true);
         try {
+            // Validar cores nas variantes
+            if (selectedModule === "sports" && colors.length > 0) {
+                 const missingColor = variants.some(v => v.size.trim() !== "" && !v.color);
+                 if (missingColor) {
+                     toast.error("Por favor, selecione a cor para todas as variantes ou remova as cores se não houver.");
+                     setLoading(false);
+                     return;
+                 }
+            }
+
             const productData: Product = {
                 id: product?.id || "",
                 active: product?.active ?? true,
                 ...data,
-                subCategory: data.subCategory || undefined,
-                module: selectedModule as any,
+                // Ensure arrays are passed
+                categories: data.categories,
+                subCategories: data.subCategories || [],
+                brands: data.brands || [],
+                models: data.models || [],
+
                 images: images,
                 variants: variants.filter((v) => v.size.trim() !== ""),
                 ...(selectedModule === "sports" && colors.length > 0 && {
@@ -384,92 +392,57 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
                     <div>
                         <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
-                            Categoria *
+                            Categoria(s) *
                         </label>
-                        <select
-                            {...register("category")}
-                            className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                        >
-                            <option value="">Selecione...</option>
-                            {/* Filter out subcategories from main category list if not already done */}
-                            {categories.map((cat) => (
-                                <option key={cat.id} value={cat.slug}>{cat.name}</option>
-                            ))}
-                        </select>
-                        {errors.category && (
-                            <p className="text-red-600 text-sm mt-1">{errors.category.message}</p>
+                        <MultiSelectSearch
+                            options={parentCategories.map(c => ({ label: c.name, value: c.id }))}
+                            value={watch("categories") || []}
+                            onChange={(val) => setValue("categories", val, { shouldValidate: true })}
+                            placeholder="Selecione as categorias..."
+                        />
+                        {errors.categories && (
+                            <p className="text-red-600 text-sm mt-1">{errors.categories.message}</p>
                         )}
                     </div>
 
                     <div>
                         <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
-                            Subcategoria (Opcional)
+                            Subcategoria(s) (Opcional)
                         </label>
-                        <select
-                            {...register("subCategory")}
-                            disabled={!currentCategoryId}
-                            className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-neutral-50 disabled:text-neutral-400"
-                        >
-                            <option value="">Nenhuma</option>
-                            {subCategories.map((sub) => (
-                                <option key={sub.id} value={sub.slug}>{sub.name}</option>
-                            ))}
-                        </select>
+                        <MultiSelectSearch
+                            options={availableSubCategories.map(c => ({ label: c.name, value: c.id }))}
+                            value={watch("subCategories") || []}
+                            onChange={(val) => setValue("subCategories", val)}
+                            placeholder="Selecione as subcategorias..."
+                        />
                     </div>
-
-                    {/* Liga - Sports Only */}
-                    {isSports && leagues.length > 0 && (
-                        <div>
-                            <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
-                                Liga (Opcional)
-                            </label>
-                            <select
-                                {...register("league")}
-                                className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                            >
-                                <option value="">Nenhuma</option>
-                                {leagues.map((l) => (
-                                    <option key={l.id} value={l.slug}>{l.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                    )}
                 </div>
 
-                {/* Brand and Model - Dynamic for both modules now */}
+
+                {/* Brand and Model */}
                 <div className="grid gap-4 md:grid-cols-2 mt-4 pt-4 border-t border-neutral-100">
                     <div>
                         <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
-                            Marca
+                            Marca(s)
                         </label>
-                        <select
-                            {...register("brandId")}
-                            className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
-                        >
-                            <option value="">Selecione a Marca...</option>
-                            {brands.map(b => (
-                                <option key={b.id} value={b.id}>{b.name}</option>
-                            ))}
-                        </select>
+                        <MultiSelectSearch
+                            options={availableBrands.map(b => ({ label: b.name, value: b.id }))}
+                            value={watch("brands") || []}
+                            onChange={(val) => setValue("brands", val)}
+                            placeholder="Selecione as marcas..."
+                        />
                     </div>
 
                     <div>
                         <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
-                            Modelo
+                            Modelo(s)
                         </label>
-                        <select
-                            {...register("modelId")}
-                            disabled={!currentBrandId}
-                            className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none disabled:bg-neutral-100 disabled:text-neutral-400"
-                        >
-                            <option value="">Selecione o Modelo...</option>
-                            {models.map(m => (
-                                <option key={m.id} value={m.id}>{m.name}</option>
-                            ))}
-                        </select>
-                        {!currentBrandId && (
-                            <p className="text-xs text-neutral-500 mt-1">Selecione uma marca primeiro.</p>
-                        )}
+                        <MultiSelectSearch
+                            options={availableModels.map(m => ({ label: m.name, value: m.id }))}
+                            value={watch("models") || []}
+                            onChange={(val) => setValue("models", val)}
+                            placeholder="Selecione os modelos..."
+                        />
                     </div>
                 </div>
 
@@ -532,58 +505,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                 )}
             </div>
 
-            {/* Variantes */}
-            <div className="bg-white rounded-xl border border-neutral-200 p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
-                    <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight">
-                        Variantes / Estoque
-                    </h2>
-                    <button
-                        type="button"
-                        onClick={handleAddVariant}
-                        className="w-fit flex items-center gap-2 text-primary hover:text-primary-dark font-body font-bold uppercase text-xs"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Adicionar
-                    </button>
-                </div>
-
-                <div className="space-y-3">
-                    {variants.map((variant, index) => (
-                        <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-neutral-50 p-3 rounded-lg sm:bg-transparent sm:p-0">
-                            <input
-                                type="text"
-                                value={variant.size}
-                                onChange={(e) => handleVariantChange(index, "size", e.target.value)}
-                                className="w-full sm:w-40 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                placeholder={variantPlaceholder}
-                            />
-                            <div className="flex-1 flex gap-3 w-full">
-                                <input
-                                    type="number"
-                                    value={variant.stock}
-                                    onChange={(e) => handleVariantChange(index, "stock", parseInt(e.target.value) || 0)}
-                                    className="flex-1 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                    placeholder="Estoque"
-                                    min="0"
-                                />
-                                {variants.length > 1 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemoveVariant(index)}
-                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                    >
-                                        <X className="w-5 h-5" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Cores - Sports Only */}
-            {isSports && (
+ {isSports && (
                 <div className="bg-white rounded-xl border border-neutral-200 p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                         <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight">
@@ -633,50 +555,107 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                 </div>
             )}
 
-            {/* Personalização - Sports Only */}
-            {isSports && (
-                <div className="bg-white rounded-xl border border-neutral-200 p-6">
-                    <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight mb-4 flex items-center gap-2">
-                        <span className="text-2xl">👕</span> Personalização
+            {/* Variantes */}
+            <div className="bg-white rounded-xl border border-neutral-200 p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                    <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight">
+                        Variantes / Estoque
                     </h2>
+                    <button
+                        type="button"
+                        onClick={handleAddVariant}
+                        className="w-fit flex items-center gap-2 text-primary hover:text-primary-dark font-body font-bold uppercase text-xs"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Adicionar
+                    </button>
+                </div>
 
-                    <div className="space-y-4">
-                        <label className="flex items-center gap-3 p-4 border border-neutral-200 rounded-lg cursor-pointer hover:bg-neutral-50 transition-colors">
+                <div className="space-y-3">
+                    {variants.map((variant, index) => (
+                        <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-neutral-50 p-3 rounded-lg sm:bg-transparent sm:p-0">
+                            {isSports && colors.length > 0 && (
+                                <select
+                                    value={variant.color || ""}
+                                    onChange={(e) => handleVariantChange(index, "color", e.target.value)}
+                                    className="w-full sm:w-40 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                >
+                                    <option value="">Cor...</option>
+                                    {colors.map((c, i) => (
+                                        <option key={i} value={c.name}>{c.name}</option>
+                                    ))}
+                                </select>
+                            )}
                             <input
-                                type="checkbox"
-                                {...register("allowCustomization")}
-                                className="w-5 h-5 text-primary border-neutral-300 rounded focus:ring-primary"
+                                type="text"
+                                value={variant.size}
+                                onChange={(e) => handleVariantChange(index, "size", e.target.value)}
+                                className="w-full sm:w-40 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                placeholder={variantPlaceholder}
                             />
-                            <div>
-                                <span className="font-heading font-bold text-neutral-900 block">
-                                    Permitir Personalização (Nome e Número)
-                                </span>
-                                <span className="text-sm text-neutral-500 font-body">
-                                    O cliente poderá adicionar nome e número na camisa.
-                                </span>
-                            </div>
-                        </label>
-
-                        {allowCustomization && (
-                            <div className="animate-in slide-in-from-top-2 duration-200">
-                                <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
-                                    Custo Adicional (R$)
-                                </label>
+                            <div className="flex-1 flex gap-3 w-full">
                                 <input
                                     type="number"
-                                    step="0.01"
-                                    {...register("customizationPrice", { valueAsNumber: true })}
-                                    className="w-full md:w-1/3 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                    placeholder="0.00"
+                                    value={variant.stock}
+                                    onChange={(e) => handleVariantChange(index, "stock", parseInt(e.target.value) || 0)}
+                                    className="flex-1 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                    placeholder="Estoque"
+                                    min="0"
                                 />
-                                <p className="text-xs text-neutral-500 mt-1">
-                                    Valor acrescentado ao total se o cliente optar por personalizar.
-                                </p>
+                                {isSports && (
+                                    <div className="flex items-center gap-2 px-3 py-2 border border-neutral-300 rounded-lg bg-white" title="Permitir Personalização nesta variante">
+                                        <input
+                                            type="checkbox"
+                                            checked={variant.allowCustomization ?? false}
+                                            onChange={(e) => handleVariantChange(index, "allowCustomization", e.target.checked)}
+                                            className="w-4 h-4 text-primary border-neutral-300 rounded focus:ring-primary"
+                                        />
+                                        <span className="text-sm text-neutral-600 font-body">Pers.</span>
+                                    </div>
+                                )}
+                                {variants.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveVariant(index)}
+                                        className="p-2 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                )}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    ))}
                 </div>
-            )}
+
+                {isSports && (
+                    <div className="mt-6 pt-4 border-t border-neutral-100">
+                         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                            <label className={`block text-sm font-body font-medium mb-2 sm:mb-0 ${variants.some(v => v.allowCustomization) ? 'text-neutral-700' : 'text-neutral-400'}`}>
+                                Preço da Personalização (R$)
+                            </label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                disabled={!variants.some(v => v.allowCustomization)}
+                                {...register("customizationPrice", { valueAsNumber: true })}
+                                className="w-full sm:w-48 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-neutral-100 disabled:text-neutral-400"
+                                placeholder="0.00"
+                            />
+                             <p className="text-xs text-neutral-500 font-body">
+                                {variants.some(v => v.allowCustomization) 
+                                    ? "Este valor será somado ao total quando o cliente personalizar o item."
+                                    : "Habilite a personalização em pelo menos uma variante acima para definir o preço."}
+                            </p>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Cores - Sports Only */}
+           
+
+            {/* Personalização - Removed Global Section */}
+
 
             {/* Automotive Extra Fields - Only show if Automotive module */}
             {!isSports && (

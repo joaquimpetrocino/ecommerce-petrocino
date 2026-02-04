@@ -14,7 +14,6 @@ const StoreConfigSchema = new Schema({
     logoUrl: { type: String, default: "" },
     whatsappNumber: { type: String, default: "" },
     enableWhatsApp: { type: Boolean, default: true },
-    module: { type: String, default: "unified", enum: ["sports", "automotive", "unified"] },
 
     // Unified Hero Configuration
     hero: {
@@ -48,6 +47,19 @@ const StoreConfigSchema = new Schema({
 *TOTAL: {{total}}*
 ───────────────────
 _Pedido gerado via Site_`
+    },
+    whatsappRecoveryTemplate: {
+        type: String,
+        default: `Olá *{{customerName}}*! 
+    
+Notamos que seu pedido *#{{orderId}}* está pendente.
+
+*RESUMO DO PEDIDO:*
+{{items}}
+ *Total: {{total}}*
+
+Podemos ajudar a finalizar sua compra?
+Se tiver dúvidas, estamos à disposição!`
     }
 }, {
     timestamps: true

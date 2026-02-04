@@ -38,7 +38,6 @@ export default function AdminProductsPage() {
     const [filterStatus, setFilterStatus] = useState<string>("all");
     const [filterCategory, setFilterCategory] = useState<string>("all");
     const [filterBrand, setFilterBrand] = useState<string>("all");
-    const [filterModule, setFilterModule] = useState<string>("all");
     const [filterInventory, setFilterInventory] = useState<string>("all");
 
     // Metadados para filtros
@@ -178,13 +177,12 @@ export default function AdminProductsPage() {
         const matchesStatus = filterStatus === "all" ? true : (filterStatus === "active" ? p.active : !p.active);
         const matchesCategory = filterCategory === "all" ? true : p.category === filterCategory;
         const matchesBrand = filterBrand === "all" ? true : p.brandId === filterBrand;
-        const matchesModule = filterModule === "all" ? true : p.module === filterModule;
 
         const totalStock = p.variants.reduce((sum, v) => sum + v.stock, 0);
         const matchesInventory = filterInventory === "all" ? true :
             filterInventory === "out" ? totalStock === 0 : totalStock > 0;
 
-        return matchesSearch && matchesStatus && matchesCategory && matchesBrand && matchesModule && matchesInventory;
+        return matchesSearch && matchesStatus && matchesCategory && matchesBrand && matchesInventory;
     });
 
     if (loading) {
@@ -234,19 +232,7 @@ export default function AdminProductsPage() {
                         />
                     </div>
 
-                    {/* Filtro por Módulo */}
-                    <div className="space-y-1">
-                        <label className="text-[10px] uppercase font-bold text-neutral-400 ml-1">Módulo</label>
-                        <select
-                            value={filterModule}
-                            onChange={(e) => setFilterModule(e.target.value)}
-                            className="w-full px-4 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm font-body focus:border-primary outline-none transition-all"
-                        >
-                            <option value="all">Todos Módulos</option>
-                            <option value="sports">Esportes</option>
-                            <option value="automotive">Automotivo</option>
-                        </select>
-                    </div>
+                    
 
                     {/* Filtro por Categoria */}
                     <div className="space-y-1">
@@ -308,14 +294,13 @@ export default function AdminProductsPage() {
                 </div>
 
                 {/* Botão de Limpar Filtros (só aparece se houver filtros ativos) */}
-                {(filterStatus !== "all" || filterCategory !== "all" || filterBrand !== "all" || filterModule !== "all" || filterInventory !== "all" || searchTerm !== "") && (
+                {(filterStatus !== "all" || filterCategory !== "all" || filterBrand !== "all" || filterInventory !== "all" || searchTerm !== "") && (
                     <div className="flex justify-end pt-2">
                         <button
                             onClick={() => {
                                 setFilterStatus("all");
                                 setFilterCategory("all");
                                 setFilterBrand("all");
-                                setFilterModule("all");
                                 setFilterInventory("all");
                                 setSearchTerm("");
                             }}

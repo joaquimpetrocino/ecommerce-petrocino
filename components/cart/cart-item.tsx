@@ -11,6 +11,7 @@ interface CartItemProps {
     quantity: number;
     customName?: string;
     customNumber?: string;
+    color?: string;
     onUpdateQuantity: (newQuantity: number) => void;
     onRemove: () => void;
 }
@@ -21,6 +22,7 @@ export function CartItem({
     quantity,
     customName,
     customNumber,
+    color,
     onUpdateQuantity,
     onRemove,
 }: CartItemProps) {
@@ -68,6 +70,11 @@ export function CartItem({
                         <p>
                             Tamanho: <span className="font-semibold text-neutral-900">{variantSize}</span>
                         </p>
+                        {color && (
+                            <p>
+                                Cor: <span className="font-semibold text-neutral-900">{color}</span>
+                            </p>
+                        )}
                         {hasCustomization && (
                             <div className="flex flex-wrap gap-2 lg:gap-3 bg-neutral-50 px-2 py-0.5 rounded border border-neutral-100">
                                 {customName && (
@@ -115,8 +122,13 @@ export function CartItem({
                             </p>
                             <div className="flex flex-col items-end">
                                 <p className="text-xs text-neutral-500 font-body hidden sm:block">
-                                    {formatPrice(unitPrice)} cada
+                                    {formatPrice(product.price)} un.
                                 </p>
+                                {hasCustomization && customizationPrice > 0 && (
+                                    <p className="text-[10px] text-primary font-medium hidden sm:block">
+                                        + {formatPrice(customizationPrice)} pers.
+                                    </p>
+                                )}
                             </div>
                         </div>
 

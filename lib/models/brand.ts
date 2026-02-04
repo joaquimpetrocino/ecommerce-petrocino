@@ -5,11 +5,6 @@ const BrandSchema = new Schema({
     name: { type: String, required: true },
     slug: { type: String, required: true },
     logoUrl: { type: String },
-    module: {
-        type: String,
-        required: false,
-        enum: ["sports", "automotive"]
-    },
     active: { type: Boolean, default: true }
 }, {
     timestamps: true

@@ -7,13 +7,11 @@ import { toast } from "sonner";
 import { Order, OrderStatus } from "@/types";
 import { OrderStatusBadge } from "@/components/admin/order-status-badge";
 import { formatPrice } from "@/lib/utils";
-import { generateWhatsAppLink } from "@/lib/whatsapp";
+import { generateWhatsAppLink, formatRecoveryMessage, formatWhatsAppMessage } from "@/lib/whatsapp";
 
 const statusOptions: { value: OrderStatus; label: string }[] = [
     { value: "pendente", label: "Pendente" },
     { value: "confirmado", label: "Confirmado (Baixar Estoque)" },
-    { value: "enviado", label: "Enviado" },
-    { value: "entregue", label: "Entregue" },
     { value: "cancelado", label: "Cancelado" },
 ];
 
@@ -85,44 +83,56 @@ export default function OrderDetailsPage() {
     const handleResendWhatsApp = () => {
         if (!order) return;
 
-        // We need to fetch the current template to ensure we use the latest one
-        // Alternatively, generateWhatsAppLink handles it client side if we pass the current config?
-        // Wait, generateWhatsAppLink needs a template if we want to use the stored one.
-        // For simplicity in Admin, we can either fetch config OR (better) just let it use default if we can't easily fetch config here without another API call.
-        // Ideally, we should fetch config.
-        // Let's rely on default for now or try to fetch config if important.
-        // Actually, the previous implementation in checkout/route.ts fetched config server side.
-        // Client side, we don't have the config unless we fetch it.
-        // Let's assume default template is fine for "Resend" or we implement a fetch.
-        // Considering the user emphasized "customizable template", I should probably fetch the template.
-
         fetch('/api/admin/store-config')
             .then(res => res.json())
             .then(config => {
-                const link = generateWhatsAppLink(
-                    order.customerData.phone,
-                    {
+                let message = "";
+                
+                // Logic for pending orders (Recovery)
+                if (order.status === 'pendente') {
+                    message = formatRecoveryMessage({
                         orderId: order.orderId,
                         items: order.items,
                         total: order.total,
                         customerData: order.customerData
-                    },
-                    config.whatsappTemplate
-                );
-                window.open(link, "_blank");
+                    }, config.whatsappRecoveryTemplate);
+                } else {
+                    // Default logic for Logic (Confirmation)
+                    message = formatWhatsAppMessage({
+                        orderId: order.orderId,
+                        items: order.items,
+                        total: order.total,
+                        customerData: order.customerData
+                    }, config.whatsappTemplate);
+                }
+
+                const encodedMessage = encodeURIComponent(message);
+                const cleanPhone = order.customerData.phone.replace(/\D/g, '');
+                window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, "_blank");
             })
             .catch(err => {
                 console.error("Error fetching config for whatsapp", err);
-                const link = generateWhatsAppLink(
-                    order.customerData.phone,
-                    {
+                // Fallback if fetch fails
+                let message = "";
+                if (order.status === 'pendente') {
+                     message = formatRecoveryMessage({
                         orderId: order.orderId,
                         items: order.items,
                         total: order.total,
                         customerData: order.customerData
-                    }
-                );
-                window.open(link, "_blank");
+                    });
+                } else {
+                     message = formatWhatsAppMessage({
+                        orderId: order.orderId,
+                        items: order.items,
+                        total: order.total,
+                        customerData: order.customerData
+                    });
+                }
+                
+                const encodedMessage = encodeURIComponent(message);
+                const cleanPhone = order.customerData.phone.replace(/\D/g, '');
+                window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, "_blank");
             });
     };
 
@@ -252,7 +262,12 @@ export default function OrderDetailsPage() {
                                             {item.productName}
                                         </p>
                                         <div className="text-sm text-neutral-500 font-body">
-                                            <span>Tamanho: {item.variantSize} • Qtd: {item.quantity}</span>
+                                            <span>
+                                                Tamanho: {item.variantSize}
+                                                {item.color && ` • Cor: ${item.color}`}
+                                                {" • "}
+                                                Qtd: {item.quantity}
+                                            </span>
                                             {item.customName && (
                                                 <span className="block text-xs mt-0.5 text-primary">
                                                     Personalização: {item.customName} {item.customNumber ? `(#${item.customNumber})` : ''}
@@ -260,9 +275,21 @@ export default function OrderDetailsPage() {
                                             )}
                                         </div>
                                     </div>
-                                    <p className="font-heading font-bold text-accent text-lg">
-                                        {formatPrice(item.unitPrice * item.quantity)}
-                                    </p>
+                                    <div className="text-right flex flex-col items-end gap-0.5">
+                                        <div className="text-sm text-neutral-600 flex items-center gap-2">
+                                            <span className="text-xs text-neutral-400">Produto:</span>
+                                            {formatPrice((item.unitPrice - (item.customizationPrice || 0)))}
+                                        </div>
+                                        {item.customizationPrice && item.customizationPrice > 0 && (
+                                            <div className="text-sm text-primary flex items-center gap-2">
+                                                 <span className="text-xs text-primary/70">Pers.:</span>
+                                                + {formatPrice(item.customizationPrice)}
+                                            </div>
+                                        )}
+                                        <div className="font-heading font-bold text-accent text-lg border-t border-neutral-100 pt-1 mt-1 w-full text-right">
+                                            {formatPrice(item.unitPrice * item.quantity)}
+                                        </div>
+                                    </div>
                                 </div>
                             ))}
                             <div className="flex items-center justify-between pt-4 border-t-2 border-neutral-200">
@@ -320,7 +347,7 @@ export default function OrderDetailsPage() {
                             <button
                                 onClick={handleUpdateStatus}
                                 disabled={saving}
-                                className="w-full bg-accent hover:bg-accent-dark disabled:bg-neutral-300 text-white px-6 py-3 rounded-lg font-body font-semibold transition-all hover:scale-105 hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
+                                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-neutral-300 text-white px-6 py-3 rounded-lg font-body font-semibold transition-all hover:scale-105 hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
                             >
                                 {saving ? "Salvando..." : "Salvar Alterações"}
                             </button>

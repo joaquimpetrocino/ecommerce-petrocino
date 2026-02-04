@@ -136,13 +136,21 @@ export function CartSummary({ items, total }: CartSummaryProps) {
             {/* Items */}
             <div className="space-y-3 border-t border-neutral-200 pt-4">
                 {items.map((item, index) => (
-                    <div key={index} className="flex justify-between text-sm font-body">
-                        <span className="text-neutral-600">
-                            {item.quantity}x {item.productName} ({item.variantSize})
-                        </span>
-                        <span className="font-semibold text-neutral-900">
-                            {formatPrice(item.quantity * item.unitPrice)}
-                        </span>
+                    <div key={index} className="flex flex-col text-sm font-body border-b border-neutral-100 last:border-0 pb-2 last:pb-0">
+                        <div className="flex justify-between">
+                            <span className="text-neutral-600">
+                                {item.quantity}x {item.productName} ({item.variantSize})
+                            </span>
+                            <span className="font-semibold text-neutral-900">
+                                {formatPrice(item.quantity * (item.unitPrice - (item.customizationPrice || 0)))}
+                            </span>
+                        </div>
+                        {item.customizationPrice && item.customizationPrice > 0 && (
+                            <div className="flex justify-between text-xs text-neutral-500 pl-4 mt-1">
+                                <span>+ Personalização</span>
+                                <span>{formatPrice(item.quantity * item.customizationPrice)}</span>
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>

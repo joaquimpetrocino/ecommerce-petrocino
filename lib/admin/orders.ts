@@ -1,8 +1,8 @@
 import { Order, OrderStatus } from "@/types";
 import connectDB from "@/lib/db";
 import { Order as OrderModel } from "@/lib/models/order";
-import { decrementProductStock } from "./products";
-import { revalidatePath } from "next/cache";
+import { decrementProductStock, incrementProductStock } from "./products";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function getAllOrders(): Promise<Order[]> {
     await connectDB();
@@ -36,27 +36,32 @@ export async function createOrder(orderData: Order): Promise<Order> {
 export async function updateOrderStatus(id: string, status: OrderStatus, notes?: string): Promise<Order | null> {
     await connectDB();
 
+    const order = await OrderModel.findOne({ id });
+    if (!order) return null;
+
+    const currentStatus = order.status;
+
     // Logic for stock deduction when confirming order
-    if (status === "confirmado") {
-        const order = await OrderModel.findOne({ id });
-        if (order && order.status !== "confirmado") {
-            // Attempt to deduct stock for all items
-            // Note: This is a simple implementation. If one fails, we might have partial deduction issues.
-            // Ideally, we should use transactions or verify all stock first.
-            // For MVP, we'll try to deduct.
-            for (const item of order.items) {
-                await decrementProductStock(
-                    // We assume product name/id is stored or we can find it. 
-                    // Wait, OrderItem has `productName` but not `productId` in the Interface?
-                    // Let's check `types/index.ts`
-                    // OrderItem doesn"t have productId... we need to fix this in saving.
-                    // But wait, CartItem has productId. We should save productId in OrderItem too.
-                    // For now, let's assume we might need to find by name or fix the OrderItem type.
-                    // Actually, let's check OrderItem interface again.
-                    // It only has: productName, variantSize, quantity, unitPrice.
-                    // This is risky. We need ProductID to be accurate.
-                    // I will add productId to OrderItem in types and schema.
-                    "" as any, "", 0);
+    // Deduct if moving from Pending/Canceled -> Confirmed
+    if (status === "confirmado" && (currentStatus === "pendente" || currentStatus === "cancelado")) {
+        for (const item of order.items) {
+            if (item.productId) {
+                await decrementProductStock(item.productId, item.variantSize, item.quantity, item.color);
+            } else {
+                console.warn(`Item sem productId no pedido ${id}: ${item.productName}`);
+            }
+        }
+    }
+
+    // Logic for stock reversion
+    // Revert if moving from Confirmed/Shipped/Delivered -> Pending/Canceled
+    const wasDeducted = ["confirmado", "enviado", "entregue"].includes(currentStatus);
+    const isNowPendingOrCanceled = ["pendente", "cancelado"].includes(status);
+
+    if (wasDeducted && isNowPendingOrCanceled) {
+        for (const item of order.items) {
+            if (item.productId) {
+                await incrementProductStock(item.productId, item.variantSize, item.quantity, item.color);
             }
         }
     }
@@ -71,6 +76,9 @@ export async function updateOrderStatus(id: string, status: OrderStatus, notes?:
     ).lean();
 
     revalidatePath("/admin/pedidos");
+    revalidatePath("/admin/produtos"); // Invalidate products cache as stock changed
+    revalidateTag("products"); // Invalidate cache tag for products
+    revalidateTag("dashboard-stats"); // Invalidate dashboard stats
     return updatedOrder as unknown as Order;
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllSections, createSection, reorderSections, getSectionsByModule } from "@/lib/admin/home-sections";
+import { getAllSections, createSection, reorderSections } from "@/lib/admin/home-sections";
 import { auth } from "@/auth";
 
 export async function GET(req: NextRequest) {
@@ -8,12 +8,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const module = searchParams.get("module");
-
-    let sections = module
-        ? await getSectionsByModule(module as any)
-        : await getAllSections();
+    const sections = await getAllSections();
 
     return NextResponse.json(sections);
 }

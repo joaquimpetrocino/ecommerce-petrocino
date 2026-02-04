@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getActiveSectionsByModule } from "@/lib/admin/home-sections";
+import { getActiveSections } from "@/lib/admin/home-sections";
 import { getStoreConfig } from "@/lib/admin/store-config";
 
 // API pública para a home page consumir as seções ativas do módulo atual
 export async function GET() {
     const storeConfig = await getStoreConfig();
-    const sections = await getActiveSectionsByModule("sports"); // Module ignored
+    const sections = await getActiveSections();
 
     // Conteúdo dinâmico do Hero vindo da config única
     const defaults = {
@@ -20,7 +20,6 @@ export async function GET() {
 
     return NextResponse.json({
         sections,
-        hero: heroContent,
-        module: "unified"
+        hero: heroContent
     });
 }

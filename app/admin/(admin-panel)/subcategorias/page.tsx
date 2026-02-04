@@ -7,6 +7,7 @@ import type { Category } from "@/lib/admin/categories";
 import { toast } from "sonner";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Modal } from "@/components/ui/modal";
+import { MultiSelectSearch } from "@/components/admin/multi-select-search";
 
 export default function SubcategoriesPage() {
     const [categories, setCategories] = useState<Category[]>([]);
@@ -31,7 +32,8 @@ export default function SubcategoriesPage() {
         description: "",
         active: true,
         showInNavbar: true,
-        parentId: "", // Obrigatório aqui
+        parentId: "", 
+        parentIds: [] as string[],
     });
 
     useEffect(() => {
@@ -55,8 +57,8 @@ export default function SubcategoriesPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.parentId) {
-            toast.error("Você deve selecionar uma categoria pai.");
+        if (formData.parentIds.length === 0) {
+            toast.error("Você deve selecionar pelo menos uma categoria pai.");
             return;
         }
 
@@ -64,7 +66,8 @@ export default function SubcategoriesPage() {
 
         const payload = {
             ...formData,
-            // module: "unified"
+            parentId: formData.parentIds[0], // Legacy support
+            parentIds: formData.parentIds
         };
 
         try {
@@ -104,6 +107,7 @@ export default function SubcategoriesPage() {
             active: item.active,
             showInNavbar: item.showInNavbar,
             parentId: item.parentId || "",
+            parentIds: item.parentIds || (item.parentId ? [item.parentId] : []),
         });
         setShowForm(true);
     };
@@ -189,15 +193,26 @@ export default function SubcategoriesPage() {
         setDeleteDialog({ isOpen: true, id });
     };
 
-    const getParentName = (parentId?: string | null) => {
-        if (!parentId) return "-";
-        const parent = categories.find(c => c.id === parentId);
-        return parent ? parent.name : "Desconhecida";
+    const getParentNames = (sub: Category) => {
+        if (sub.parentIds && sub.parentIds.length > 0) {
+            return sub.parentIds.map(id => {
+                const parent = categories.find(c => c.id === id);
+                return parent ? parent.name : "Desconhecida";
+            }).join(", ");
+        }
+        if (sub.parentId) {
+            const parent = categories.find(c => c.id === sub.parentId);
+            return parent ? parent.name : "Desconhecida";
+        }
+        return "-";
     };
 
     const filteredSubcategories = parentFilter === "all"
         ? subcategories
-        : subcategories.filter(s => s.parentId === parentFilter);
+        : subcategories.filter(s => 
+            (s.parentIds && s.parentIds.includes(parentFilter)) || 
+            s.parentId === parentFilter
+        );
 
     return (
         <div className="space-y-6 pb-20">
@@ -292,19 +307,14 @@ export default function SubcategoriesPage() {
                             <div className="flex items-center gap-2 text-primary font-heading font-bold text-xs uppercase">
                                 <Info className="w-4 h-4" /> Vinculação (Obrigatório)
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-body font-medium text-neutral-400">Categoria Pai</label>
-                                <select
-                                    value={formData.parentId}
-                                    onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
-                                    className="w-full px-4 py-2 border border-neutral-200 rounded-lg font-body focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all bg-white"
-                                    required
-                                >
-                                    <option value="">Selecione uma Categoria Pai...</option>
-                                    {categories.map(c => (
-                                        <option key={c.id} value={c.id}>{c.name}</option>
-                                    ))}
-                                </select>
+                            <div className="space-y-2">
+                                <label className="text-sm font-body font-medium text-neutral-500 ml-1">Categoria Pai *</label>
+                                <MultiSelectSearch
+                                    options={categories.map(c => ({ label: c.name, value: c.id }))}
+                                    value={formData.parentIds}
+                                    onChange={(val) => setFormData({ ...formData, parentIds: val })}
+                                    placeholder="Selecione as Categorias Pai..."
+                                />
                             </div>
                         </div>
 
@@ -427,7 +437,7 @@ export default function SubcategoriesPage() {
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className="inline-flex items-center px-2 py-1 rounded-md bg-neutral-100 text-neutral-600 text-xs font-bold uppercase">
-                                            {getParentName(sub.parentId)}
+                                            {getParentNames(sub)}
                                         </span>
                                     </td>
                                     <td className="px-6 py-4"><span className="text-neutral-500 font-body text-sm bg-neutral-100 px-2 py-1 rounded">/{sub.slug}</span></td>

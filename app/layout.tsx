@@ -22,13 +22,11 @@ import { getStoreConfig } from "@/lib/admin/store-config";
 export async function generateMetadata(): Promise<Metadata> {
   const config = await getStoreConfig();
   const storeName = config.storeName || "LeagueSports";
-  const title = `${storeName} - ${config.module === 'sports' ? 'Artigos Esportivos' : 'Peças Automotivas'}`;
+  const title = `${storeName}`;
 
   return {
     title,
-    description: config.module === 'sports'
-      ? `Sua loja oficial ${storeName}. Os melhores artigos esportivos.`
-      : `Sua loja oficial ${storeName}. As melhores peças automotivas.`,
+    description: `Sua loja oficial ${storeName}.`,
     icons: {
       icon: config.logoUrl || "/favicon.ico",
     },

@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { getCategoriesByModule } from "@/lib/admin/categories";
-import { getStoreConfig } from "@/lib/admin/store-config";
 
-// API pública para obter categorias do módulo ativo
+// API pública para obter categorias
 export async function GET(req: any) {
     const { searchParams } = new URL(req.url);
     const parentId = searchParams.get("parentId");
 
-    const categories = await getCategoriesByModule("unified");
+    const categories = await getCategoriesByModule();
 
     let filtered = categories.filter((cat) => cat.active);
 

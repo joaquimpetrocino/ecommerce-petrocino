@@ -5,14 +5,12 @@ import { Plus, Edit, Trash2, X, Info, CheckSquare, Square, Eye, EyeOff } from "l
 import { toast } from "sonner";
 import { AlertDialog } from "@/components/ui/alert-dialog";
 import { Modal } from "@/components/ui/modal";
-import { StoreModule } from "@/types";
 
 interface Model {
     id: string;
     name: string;
     slug: string;
     brandId: string;
-    module?: "sports" | "automotive" | "unified";
     active: boolean;
 }
 
@@ -31,7 +29,6 @@ export default function ModelsPage() {
     const [searchTerm, setSearchTerm] = useState("");
     const [filterStatus, setFilterStatus] = useState<string>("all");
     const [filterBrand, setFilterBrand] = useState<string>("all");
-    const [filterModule, setFilterModule] = useState<string>("all");
 
     // Bulk Selection State
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -43,7 +40,6 @@ export default function ModelsPage() {
         name: "",
         slug: "",
         brandId: "",
-        module: "sports" as "sports" | "automotive" | "unified",
         active: true
     });
     const [isSaving, setIsSaving] = useState(false);
@@ -131,8 +127,7 @@ export default function ModelsPage() {
         const matchesSearch = m.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = filterStatus === "all" ? true : (filterStatus === "active" ? m.active : !m.active);
         const matchesBrand = filterBrand === "all" ? true : m.brandId === filterBrand;
-        const matchesModule = filterModule === "all" ? true : m.module === filterModule;
-        return matchesSearch && matchesStatus && matchesBrand && matchesModule;
+        return matchesSearch && matchesStatus && matchesBrand;
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -200,7 +195,6 @@ export default function ModelsPage() {
             name: "",
             slug: "",
             brandId: "",
-            module: "sports",
             active: true
         });
         setEditingId(null);
@@ -211,7 +205,6 @@ export default function ModelsPage() {
             name: model.name,
             slug: model.slug,
             brandId: model.brandId,
-            module: model.module || "sports",
             active: model.active
         });
         setEditingId(model.id);
@@ -237,7 +230,7 @@ export default function ModelsPage() {
                 </div>
                 <button
                     onClick={() => { resetForm(); setShowForm(true); }}
-                    className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-heading font-bold uppercase flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:scale-105"
+                    className="w-full sm:w-auto bg-neutral-900 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-heading font-bold uppercase flex items-center justify-center gap-2 transition-all shadow-lg shadow-neutral-900/20 hover:shadow-red-600/20 hover:scale-105"
                 >
                     <Plus className="w-5 h-5" />
                     Novo Modelo
@@ -256,16 +249,6 @@ export default function ModelsPage() {
                     />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <select
-                        value={filterModule}
-                        onChange={(e) => setFilterModule(e.target.value)}
-                        className="w-full sm:w-auto min-w-[140px] px-4 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm font-body focus:border-primary outline-none transition-all"
-                    >
-                        <option value="all">Módulo: Todos</option>
-                        <option value="sports">Esportes/Roupas</option>
-                        <option value="automotive">Auto Peças</option>
-                        <option value="unified">Unificado</option>
-                    </select>
                     <select
                         value={filterBrand}
                         onChange={(e) => setFilterBrand(e.target.value)}
@@ -312,7 +295,7 @@ export default function ModelsPage() {
                         <button
                             onClick={handleBulkDelete}
                             disabled={isActionLoading}
-                            className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
+                            className="flex items-center gap-1 px-3 py-2 bg-white border border-neutral-200 text-neutral-700 hover:text-red-600 hover:bg-red-50 hover:border-red-200 rounded-lg text-sm font-medium transition-colors"
                         >
                             <Trash2 className="w-4 h-4" /> Excluir
                         </button>
@@ -338,7 +321,6 @@ export default function ModelsPage() {
                                 </button>
                             </th>
                             <th className="text-left px-6 py-4 font-heading font-bold text-neutral-900 uppercase text-sm">Nome</th>
-                            <th className="text-left px-6 py-4 font-heading font-bold text-neutral-900 uppercase text-sm">Módulo</th>
                             <th className="text-left px-6 py-4 font-heading font-bold text-neutral-900 uppercase text-sm">Marca</th>
                             <th className="text-left px-6 py-4 font-heading font-bold text-neutral-900 uppercase text-sm">Status</th>
                             <th className="text-right px-6 py-4 font-heading font-bold text-neutral-900 uppercase text-sm">Ações</th>
@@ -369,11 +351,6 @@ export default function ModelsPage() {
                                             </button>
                                         </td>
                                         <td className="px-6 py-4 font-body font-medium text-neutral-900">{model.name}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${model.module === 'automotive' ? 'bg-orange-100 text-orange-700' : model.module === 'unified' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                {model.module === 'automotive' ? 'Auto Peças' : model.module === 'unified' ? 'Unificado' : 'Esportes'}
-                                            </span>
-                                        </td>
                                         <td className="px-6 py-4 font-body text-neutral-600">{getBrandName(model.brandId)}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${model.active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
@@ -383,10 +360,10 @@ export default function ModelsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => openEdit(model)} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                                                <button onClick={() => openEdit(model)} className="p-2 text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                                     <Edit className="w-4 h-4" />
                                                 </button>
-                                                <button onClick={() => setDeleteDialog({ isOpen: true, ids: [model.id] })} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                <button onClick={() => setDeleteDialog({ isOpen: true, ids: [model.id] })} className="p-2 text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
@@ -443,17 +420,7 @@ export default function ModelsPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-body font-medium text-neutral-700">Módulo</label>
-                            <select
-                                value={formData.module}
-                                onChange={(e) => setFormData({ ...formData, module: e.target.value as any })}
-                                className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                required
-                            >
-                                <option value="sports">Esportes/Roupas</option>
-                                <option value="automotive">Auto Peças</option>
-                                <option value="unified">Unificado (Ambos)</option>
-                            </select>
+                            {/* Campo de módulo removido (não utilizado) */}
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm font-body font-medium text-neutral-700">Slug</label>

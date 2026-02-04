@@ -3,7 +3,9 @@ import mongoose, { Schema } from "mongoose";
 const ProductVariantSchema = new Schema({
     type: { type: String, enum: ["roupa", "calcado"] },
     size: { type: String, required: true },
-    stock: { type: Number, required: true, default: 0 }
+    color: { type: String }, // Nome da cor (vinculado a ProductColor.name)
+    stock: { type: Number, required: true, default: 0 },
+    allowCustomization: { type: Boolean, default: false }
 }, { _id: false });
 
 const ProductColorSchema = new Schema({
@@ -27,19 +29,13 @@ const ProductSchema = new Schema({
     description: { type: String, required: true },
     price: { type: Number, required: true },
     images: [{ type: String }],
-    category: { type: String, required: true },
-    subCategory: { type: String },
-    league: { type: String },
+    categories: [{ type: String }], // ID das categorias (Multiple)
+    subCategories: [{ type: String }], // ID das subcategorias (Multiple)
     variants: [ProductVariantSchema],
     featured: { type: Boolean, default: false },
     active: { type: Boolean, default: true },
-    module: {
-        type: String,
-        required: false, // Made optional for migration
-        enum: ["sports", "automotive"]
-    },
-    brandId: { type: String }, // ID da marca selecionada
-    modelId: { type: String }, // ID do modelo selecionado
+    brands: [{ type: String }], // IDs das marcas selecionadas (Multiple)
+    models: [{ type: String }], // IDs dos modelos selecionados (Multiple)
     colors: [ProductColorSchema], // Apenas para sports
     automotiveFields: AutomotiveFieldsSchema, // Apenas para automotive
     allowCustomization: { type: Boolean, default: false },

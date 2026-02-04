@@ -1,4 +1,4 @@
-import { Product, StoreModule } from "@/types";
+import { Product } from "@/types";
 import connectDB from "@/lib/db";
 import { Product as ProductModel } from "@/lib/models/product";
 import { unstable_cache } from "next/cache";
@@ -52,15 +52,15 @@ export async function deleteProduct(id: string): Promise<boolean> {
     return result.deletedCount > 0;
 }
 
-// Filtros específicos (Deprecating module filter)
-export async function getProductsByModule(module: StoreModule): Promise<Product[]> {
+// Filtros específicos (sem módulo)
+export async function getProductsByModule(): Promise<Product[]> {
     await connectDB();
     const products = await ProductModel.find({ active: true }).lean();
     return products.map((p: any) => ({ ...p, id: p.id || p._id.toString() })) as unknown as Product[];
 }
 
 // Versão cacheada para o dashboard
-export async function getCachedProductsByModule(module: StoreModule) {
+export async function getCachedProductsByModule() {
     return unstable_cache(
         async () => getAllProducts(),
         ["products-list", "all"], // Unified cache tag
@@ -68,19 +68,19 @@ export async function getCachedProductsByModule(module: StoreModule) {
     )();
 }
 
-export async function getFeaturedProducts(module?: StoreModule): Promise<Product[]> {
+export async function getFeaturedProducts(): Promise<Product[]> {
     await connectDB();
     const products = await ProductModel.find({ featured: true, active: true }).lean();
     return products.map((p: any) => ({ ...p, id: p.id || p._id.toString() })) as unknown as Product[];
 }
 
-export async function getProductsByCategory(slug: string, module?: StoreModule): Promise<Product[]> {
+export async function getProductsByCategory(slug: string): Promise<Product[]> {
     await connectDB();
     const products = await ProductModel.find({ category: slug, active: true }).lean();
     return products.map((p: any) => ({ ...p, id: p.id || p._id.toString() })) as unknown as Product[];
 }
 
-export async function getRelatedProducts(productId: string, module?: StoreModule): Promise<Product[]> {
+export async function getRelatedProducts(productId: string): Promise<Product[]> {
     await connectDB();
     const product = await ProductModel.findOne({ id: productId });
     if (!product) return [];
@@ -95,19 +95,48 @@ export async function getRelatedProducts(productId: string, module?: StoreModule
     return related.map((p: any) => ({ ...p, id: p.id || p._id.toString() })) as unknown as Product[];
 }
 
-export async function decrementProductStock(productId: string, variantSize: string, quantity: number): Promise<boolean> {
+export async function decrementProductStock(productId: string, variantSize: string, quantity: number, variantColor?: string): Promise<boolean> {
     await connectDB();
     const product = await ProductModel.findOne({ id: productId });
 
     if (!product) return false;
 
-    const variantIndex = product.variants.findIndex((v: any) => v.size === variantSize);
+    const variantIndex = product.variants.findIndex((v: any) => {
+        const sizeMatch = v.size === variantSize;
+        const colorMatch = variantColor ? v.color === variantColor : true;
+        // If product has colors, we should match color. If not, we ignore.
+        // But to be safe:
+        if (variantColor) return sizeMatch && v.color === variantColor;
+        return sizeMatch;
+    });
+
     if (variantIndex === -1) return false;
 
     // Check if enough stock
     if (product.variants[variantIndex].stock < quantity) return false;
 
     product.variants[variantIndex].stock -= quantity;
+    await product.save();
+
+    return true;
+}
+
+export async function incrementProductStock(productId: string, variantSize: string, quantity: number, variantColor?: string): Promise<boolean> {
+    await connectDB();
+    const product = await ProductModel.findOne({ id: productId });
+
+    if (!product) return false;
+
+    const variantIndex = product.variants.findIndex((v: any) => {
+        const sizeMatch = v.size === variantSize;
+        const colorMatch = variantColor ? v.color === variantColor : true;
+        if (variantColor) return sizeMatch && v.color === variantColor;
+        return sizeMatch;
+    });
+
+    if (variantIndex === -1) return false;
+
+    product.variants[variantIndex].stock += quantity;
     await product.save();
 
     return true;

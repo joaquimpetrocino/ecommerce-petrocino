@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCachedQuestionsByModule, updateQuestion, deleteQuestion } from "@/lib/admin/product-questions";
 import { invalidateDashboardCache } from "@/lib/admin/dashboard-stats";
-import { getStoreConfig } from "@/lib/admin/store-config";
 import { auth } from "@/auth";
 
 export async function GET(req: NextRequest) {
@@ -10,14 +9,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(req.url);
-    const module = searchParams.get("module") as any;
-    const storeConfig = await getStoreConfig();
-
-    // Filtramos pelo módulo da query string ou pelo módulo ativo
-    const targetModule = module || storeConfig.module;
-
-    const questions = await getCachedQuestionsByModule(targetModule);
+    const questions = await getCachedQuestionsByModule();
     return NextResponse.json(questions);
 }
 

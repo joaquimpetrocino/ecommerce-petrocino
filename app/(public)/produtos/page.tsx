@@ -7,7 +7,6 @@ interface ProductsPageProps {
     searchParams: Promise<{
         category?: string;
         subcategory?: string;
-        league?: string;
         brand?: string;
         model?: string;
         q?: string;
@@ -40,7 +39,7 @@ async function getCategories(): Promise<any[]> {
 
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
     const params = await searchParams;
-    const { category, subcategory, league, brand, model, q } = params;
+    const { category, subcategory, brand, model, q } = params;
 
     const [products, allCategories] = await Promise.all([
         getProducts(),
@@ -61,7 +60,6 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             matchesCategory = product.category === category || childrenSlugs.includes(product.category);
         }
 
-        const matchesLeague = !league || product.league === league;
         const matchesBrand = !brand || product.brandId === brand;
         const matchesModel = !model || product.modelId === model;
 
@@ -69,7 +67,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             product.name.toLowerCase().includes(q.toLowerCase()) ||
             product.description.toLowerCase().includes(q.toLowerCase());
 
-        return matchesCategory && matchesLeague && matchesBrand && matchesModel && matchesSearch;
+        return matchesCategory && matchesBrand && matchesModel && matchesSearch;
     });
 
     return (

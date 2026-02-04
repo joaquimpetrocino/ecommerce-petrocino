@@ -11,7 +11,6 @@ interface Brand {
     name: string;
     slug: string;
     logoUrl?: string;
-    module?: "sports" | "automotive" | "unified";
     active: boolean;
 }
 
@@ -23,7 +22,6 @@ export default function BrandsPage() {
     // Filtros
     const [searchTerm, setSearchTerm] = useState("");
     const [filterStatus, setFilterStatus] = useState<string>("all");
-    const [filterModule, setFilterModule] = useState<string>("all");
 
     // Bulk Selection State
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -35,7 +33,6 @@ export default function BrandsPage() {
         name: "",
         slug: "",
         logoUrl: "",
-        module: "sports" as "sports" | "automotive" | "unified",
         active: true
     });
     const [isSaving, setIsSaving] = useState(false);
@@ -116,8 +113,7 @@ export default function BrandsPage() {
     const filteredBrands = brands.filter((b) => {
         const matchesSearch = b.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = filterStatus === "all" ? true : (filterStatus === "active" ? b.active : !b.active);
-        const matchesModule = filterModule === "all" ? true : b.module === filterModule;
-        return matchesSearch && matchesStatus && matchesModule;
+        return matchesSearch && matchesStatus;
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -185,7 +181,6 @@ export default function BrandsPage() {
             name: "",
             slug: "",
             logoUrl: "",
-            module: "sports",
             active: true
         });
         setEditingId(null);
@@ -196,7 +191,6 @@ export default function BrandsPage() {
             name: brand.name,
             slug: brand.slug,
             logoUrl: brand.logoUrl || "",
-            module: brand.module || "sports",
             active: brand.active
         });
         setEditingId(brand.id);
@@ -218,7 +212,7 @@ export default function BrandsPage() {
                 </div>
                 <button
                     onClick={() => { resetForm(); setShowForm(true); }}
-                    className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-heading font-bold uppercase flex items-center justify-center gap-2 transition-all shadow-lg shadow-primary/20 hover:scale-105"
+                    className="w-full sm:w-auto bg-neutral-900 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-heading font-bold uppercase flex items-center justify-center gap-2 transition-all shadow-lg shadow-neutral-900/20 hover:shadow-red-600/20 hover:scale-105"
                 >
                     <Plus className="w-5 h-5" />
                     Nova Marca
@@ -237,16 +231,6 @@ export default function BrandsPage() {
                     />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <select
-                        value={filterModule}
-                        onChange={(e) => setFilterModule(e.target.value)}
-                        className="w-full sm:w-auto min-w-[140px] px-4 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm font-body focus:border-primary outline-none transition-all"
-                    >
-                        <option value="all">Módulo: Todos</option>
-                        <option value="sports">Esportes/Roupas</option>
-                        <option value="automotive">Auto Peças</option>
-                        <option value="unified">Unificado</option>
-                    </select>
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}
@@ -283,7 +267,7 @@ export default function BrandsPage() {
                         <button
                             onClick={handleBulkDelete}
                             disabled={isActionLoading}
-                            className="flex items-center gap-1 px-3 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg text-sm font-medium transition-colors"
+                            className="flex items-center gap-1 px-3 py-2 bg-white border border-neutral-200 text-neutral-700 hover:text-red-600 hover:bg-red-50 hover:border-red-200 rounded-lg text-sm font-medium transition-colors"
                         >
                             <Trash2 className="w-4 h-4" /> Excluir
                         </button>
@@ -309,7 +293,6 @@ export default function BrandsPage() {
                                 </button>
                             </th>
                             <th className="text-left px-6 py-4 font-heading font-bold text-neutral-900 uppercase text-sm">Nome</th>
-                            <th className="text-left px-6 py-4 font-heading font-bold text-neutral-900 uppercase text-sm">Módulo</th>
                             <th className="text-left px-6 py-4 font-heading font-bold text-neutral-900 uppercase text-sm">Slug</th>
                             <th className="text-left px-6 py-4 font-heading font-bold text-neutral-900 uppercase text-sm">Status</th>
                             <th className="text-right px-6 py-4 font-heading font-bold text-neutral-900 uppercase text-sm">Ações</th>
@@ -340,11 +323,6 @@ export default function BrandsPage() {
                                             </button>
                                         </td>
                                         <td className="px-6 py-4 font-body font-medium text-neutral-900">{brand.name}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${brand.module === 'automotive' ? 'bg-orange-100 text-orange-700' : brand.module === 'unified' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                {brand.module === 'automotive' ? 'Auto Peças' : brand.module === 'unified' ? 'Unificado' : 'Esportes'}
-                                            </span>
-                                        </td>
                                         <td className="px-6 py-4 font-mono text-xs text-neutral-500">{brand.slug}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${brand.active ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
@@ -354,10 +332,10 @@ export default function BrandsPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => openEdit(brand)} className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                                                <button onClick={() => openEdit(brand)} className="p-2 text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                                     <Edit className="w-4 h-4" />
                                                 </button>
-                                                <button onClick={() => setDeleteDialog({ isOpen: true, ids: [brand.id] })} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                <button onClick={() => setDeleteDialog({ isOpen: true, ids: [brand.id] })} className="p-2 text-neutral-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
@@ -396,19 +374,7 @@ export default function BrandsPage() {
                                 required
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-body font-medium text-neutral-700">Módulo</label>
-                            <select
-                                value={formData.module}
-                                onChange={(e) => setFormData({ ...formData, module: e.target.value as any })}
-                                className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                required
-                            >
-                                <option value="sports">Esportes/Roupas</option>
-                                <option value="automotive">Auto Peças</option>
-                                <option value="unified">Unificado (Ambos)</option>
-                            </select>
-                        </div>
+                        
                         <div className="space-y-2">
                             <label className="text-sm font-body font-medium text-neutral-700">Slug</label>
                             <input

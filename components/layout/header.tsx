@@ -19,11 +19,9 @@ export function Header() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [storeInfo, setStoreInfo] = useState<{
         storeName: string;
-        module: string;
         logoUrl?: string; // Adicionado logoUrl opcional
     }>({
-        storeName: "LeagueSports",
-        module: "sports"
+        storeName: "LeagueSports"
     });
 
     useEffect(() => {

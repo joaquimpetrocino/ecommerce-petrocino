@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getStoreConfig, updateStoreConfig } from "@/lib/admin/store-config";
-
 import { auth } from "@/auth";
 
 export async function POST(req: NextRequest) {
@@ -12,17 +10,10 @@ export async function POST(req: NextRequest) {
 
     try {
         const body = await req.json();
-        const { hero, module } = body;
+        const { hero } = body;
 
         const config = await getStoreConfig();
-        const updatedHero = { ...config.hero };
-
-        // Atualiza apenas o hero do módulo específico
-        if (module === "sports") {
-            updatedHero.sports = hero;
-        } else if (module === "automotive") {
-            updatedHero.automotive = hero;
-        }
+        const updatedHero = { ...config.hero, ...hero };
 
         const updatedConfig = await updateStoreConfig({ hero: updatedHero });
         return NextResponse.json(updatedConfig);

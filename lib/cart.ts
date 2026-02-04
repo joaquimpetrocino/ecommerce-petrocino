@@ -27,7 +27,8 @@ export function addToCart(
     variantSize: string,
     quantity: number,
     customName?: string,
-    customNumber?: string
+    customNumber?: string,
+    color?: string
 ): void {
     const cart = getCart();
 
@@ -36,7 +37,8 @@ export function addToCart(
             item.productId === productId &&
             item.variantSize === variantSize &&
             item.customName === customName &&
-            item.customNumber === customNumber
+            item.customNumber === customNumber &&
+            item.color === color
     );
 
     if (existingItem) {
@@ -47,7 +49,8 @@ export function addToCart(
             variantSize,
             quantity,
             customName,
-            customNumber
+            customNumber,
+            color
         });
     }
 
@@ -59,7 +62,8 @@ export function updateCartItem(
     variantSize: string,
     quantity: number,
     customName?: string,
-    customNumber?: string
+    customNumber?: string,
+    color?: string
 ): void {
     const cart = getCart();
     const item = cart.items.find(
@@ -67,7 +71,8 @@ export function updateCartItem(
             item.productId === productId &&
             item.variantSize === variantSize &&
             item.customName === customName &&
-            item.customNumber === customNumber
+            item.customNumber === customNumber &&
+            item.color === color
     );
 
     if (item) {
@@ -80,7 +85,8 @@ export function removeFromCart(
     productId: string,
     variantSize: string,
     customName?: string,
-    customNumber?: string
+    customNumber?: string,
+    color?: string
 ): void {
     const cart = getCart();
     cart.items = cart.items.filter(
@@ -88,7 +94,8 @@ export function removeFromCart(
             item.productId === productId &&
             item.variantSize === variantSize &&
             item.customName === customName &&
-            item.customNumber === customNumber
+            item.customNumber === customNumber &&
+            item.color === color
         )
     );
     saveCart(cart);

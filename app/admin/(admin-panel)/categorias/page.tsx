@@ -18,7 +18,6 @@ export default function CategoriesPage() {
     // Filtros
     const [searchTerm, setSearchTerm] = useState("");
     const [filterStatus, setFilterStatus] = useState<string>("all");
-    const [filterModule, setFilterModule] = useState<string>("all");
 
     // Bulk Selection State
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -122,8 +121,7 @@ export default function CategoriesPage() {
     const filteredCategories = categories.filter((c) => {
         const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesStatus = filterStatus === "all" ? true : (filterStatus === "active" ? c.active : !c.active);
-        const matchesModule = filterModule === "all" ? true : c.module === filterModule;
-        return matchesSearch && matchesStatus && matchesModule;
+        return matchesSearch && matchesStatus;
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -230,15 +228,6 @@ export default function CategoriesPage() {
                     />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                    <select
-                        value={filterModule}
-                        onChange={(e) => setFilterModule(e.target.value)}
-                        className="w-full sm:w-auto min-w-[140px] px-4 py-2 bg-neutral-50 border border-neutral-200 rounded-lg text-sm font-body focus:border-primary outline-none transition-all"
-                    >
-                        <option value="all">Módulo: Todos</option>
-                        <option value="sports">Esportes</option>
-                        <option value="automotive">Automotivo</option>
-                    </select>
                     <select
                         value={filterStatus}
                         onChange={(e) => setFilterStatus(e.target.value)}

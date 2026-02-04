@@ -6,13 +6,19 @@ import { ProductVariant } from "@/types";
 interface VariantSelectorProps {
     variants: ProductVariant[];
     onSelect: (size: string) => void;
+    selectedSize?: string;
 }
 
-export function VariantSelector({ variants, onSelect }: VariantSelectorProps) {
-    const [selectedSize, setSelectedSize] = useState<string>("");
+export function VariantSelector({ variants, onSelect, selectedSize: externalSelectedSize }: VariantSelectorProps) {
+    const [internalSelectedSize, setInternalSelectedSize] = useState<string>("");
+    
+    // Use external controlled state if provided, otherwise internal state
+    const selectedSize = externalSelectedSize !== undefined ? externalSelectedSize : internalSelectedSize;
 
     const handleSelect = (size: string) => {
-        setSelectedSize(size);
+        if (externalSelectedSize === undefined) {
+            setInternalSelectedSize(size);
+        }
         onSelect(size);
     };
 
@@ -22,13 +28,13 @@ export function VariantSelector({ variants, onSelect }: VariantSelectorProps) {
                 Selecione o tamanho:
             </label>
             <div className="flex flex-wrap gap-3">
-                {variants.map((variant) => {
+                {variants.map((variant, index) => {
                     const isAvailable = variant.stock > 0;
                     const isSelected = selectedSize === variant.size;
 
                     return (
                         <button
-                            key={variant.size}
+                            key={`${variant.size}-${index}`}
                             onClick={() => isAvailable && handleSelect(variant.size)}
                             disabled={!isAvailable}
                             className={`min-w-[60px] px-4 py-3 rounded-lg font-body font-semibold transition-all ${isSelected

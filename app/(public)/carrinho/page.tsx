@@ -16,6 +16,7 @@ export default function CartPage() {
             quantity: number;
             customName?: string;
             customNumber?: string;
+            color?: string;
         }>
     >([]);
     const [products, setProducts] = useState<Product[]>([]);
@@ -43,9 +44,10 @@ export default function CartPage() {
         variantSize: string,
         newQuantity: number,
         customName?: string,
-        customNumber?: string
+        customNumber?: string,
+        color?: string
     ) => {
-        updateCartItem(productId, variantSize, newQuantity, customName, customNumber);
+        updateCartItem(productId, variantSize, newQuantity, customName, customNumber, color);
         const cart = getCart();
         setCartItems(cart.items);
         window.dispatchEvent(new Event("cart-updated"));
@@ -55,9 +57,10 @@ export default function CartPage() {
         productId: string,
         variantSize: string,
         customName?: string,
-        customNumber?: string
+        customNumber?: string,
+        color?: string
     ) => {
-        removeFromCart(productId, variantSize, customName, customNumber);
+        removeFromCart(productId, variantSize, customName, customNumber, color);
         const cart = getCart();
         setCartItems(cart.items);
         window.dispatchEvent(new Event("cart-updated"));
@@ -70,7 +73,8 @@ export default function CartPage() {
             if (!product) return null;
 
             const hasCustomization = !!(item.customName || item.customNumber);
-            const unitPrice = product.price + (hasCustomization ? (product.customizationPrice || 0) : 0);
+            const customizationPrice = hasCustomization ? (product.customizationPrice || 0) : 0;
+            const unitPrice = product.price + customizationPrice;
 
             const orderItem: OrderItem = {
                 productId: product.id,
@@ -78,8 +82,10 @@ export default function CartPage() {
                 variantSize: item.variantSize,
                 quantity: item.quantity,
                 unitPrice: unitPrice,
+                customizationPrice: customizationPrice,
                 customName: item.customName,
-                customNumber: item.customNumber
+                customNumber: item.customNumber,
+                color: item.color
             };
             return orderItem;
         })
@@ -157,7 +163,7 @@ export default function CartPage() {
 
                             if (!product) {
                                 return (
-                                    <div key={`${item.productId}-${item.variantSize}-${item.customName || ''}-${item.customNumber || ''}`} className="flex items-center justify-between p-4 border border-neutral-200 rounded-xl bg-neutral-50">
+                                    <div key={`${item.productId}-${item.variantSize}-${item.customName || ''}-${item.customNumber || ''}-${item.color || ''}`} className="flex items-center justify-between p-4 border border-neutral-200 rounded-xl bg-neutral-50">
                                         <div className="flex items-center gap-4">
                                             <div className="w-16 h-16 bg-neutral-100 rounded-lg flex items-center justify-center shrink-0">
                                                 <ShoppingBag className="w-6 h-6 text-neutral-300" />
@@ -172,7 +178,8 @@ export default function CartPage() {
                                                 item.productId,
                                                 item.variantSize,
                                                 item.customName,
-                                                item.customNumber
+                                                item.customNumber,
+                                                item.color
                                             )}
                                             className="text-red-500 hover:text-red-600 text-sm font-semibold p-2 hover:bg-red-50 rounded-lg transition-colors"
                                         >
@@ -184,19 +191,21 @@ export default function CartPage() {
 
                             return (
                                 <CartItem
-                                    key={`${item.productId}-${item.variantSize}-${item.customName || ''}-${item.customNumber || ''}`}
+                                    key={`${item.productId}-${item.variantSize}-${item.customName || ''}-${item.customNumber || ''}-${item.color || ''}`}
                                     product={product}
                                     variantSize={item.variantSize}
                                     quantity={item.quantity}
                                     customName={item.customName}
                                     customNumber={item.customNumber}
+                                    color={item.color}
                                     onUpdateQuantity={(newQuantity) =>
                                         handleUpdateQuantity(
                                             item.productId,
                                             item.variantSize,
                                             newQuantity,
                                             item.customName,
-                                            item.customNumber
+                                            item.customNumber,
+                                            item.color
                                         )
                                     }
                                     onRemove={() =>
@@ -204,7 +213,8 @@ export default function CartPage() {
                                             item.productId,
                                             item.variantSize,
                                             item.customName,
-                                            item.customNumber
+                                            item.customNumber,
+                                            item.color
                                         )
                                     }
                                 />

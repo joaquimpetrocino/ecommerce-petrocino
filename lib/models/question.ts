@@ -5,7 +5,6 @@ const ProductQuestionSchema = new Schema({
     productId: { type: String, required: true },
     productName: { type: String, required: true },
     productImage: { type: String, required: true },
-    module: { type: String, required: true },
     userName: { type: String, required: true },
     userEmail: { type: String, required: true },
     question: { type: String, required: true },

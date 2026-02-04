@@ -4,9 +4,9 @@ import { StatsOverview } from "@/components/admin/stats-overview";
 
 export default function AdminDashboard() {
     return (
-        <div className="space-y-8">
+        <div>
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                 <div>
                     <h1 className="font-heading font-bold text-neutral-900 text-4xl uppercase tracking-tight">
                         Dashboard
@@ -17,9 +17,9 @@ export default function AdminDashboard() {
                 </div>
                 <Link
                     href="/"
-                    className="flex items-center justify-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-body font-medium transition-colors w-full md:w-auto"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-primary hover:bg-primary-dark text-white rounded-lg font-body font-semibold transition-all hover:scale-105 hover:shadow-lg w-full md:w-auto"
                 >
-                    <Home className="w-4 h-4" />
+                    <Home className="w-5 h-5" />
                     Voltar para Loja
                 </Link>
             </div>
@@ -43,7 +43,7 @@ import { getCachedDashboardStats } from "@/lib/admin/dashboard-stats";
 import { AlertTriangle, MessageCircle, ArrowRight } from "lucide-react";
 
 async function LowStockPanel() {
-    const stats = await getCachedDashboardStats("sports");
+    const stats = await getCachedDashboardStats();
 
     const lowStock = stats?.lowStockProducts || [];
 
@@ -88,7 +88,7 @@ async function LowStockPanel() {
 }
 
 async function RecentQuestionsPanel() {
-    const stats = await getCachedDashboardStats("sports");
+    const stats = await getCachedDashboardStats();
 
     const latestQuestions = stats?.latestQuestions || [];
 

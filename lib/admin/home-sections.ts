@@ -1,5 +1,4 @@
 
-import { StoreModule } from "@/types";
 import connectDB from "@/lib/db";
 import { HomeSection as HomeSectionModel } from "@/lib/models/home-section";
 
@@ -11,7 +10,6 @@ export interface HomeSection {
     active: boolean;
     order: number;
     createdAt: number;
-    module: StoreModule;
     productIds?: string[];
     categorySlug?: string;
     categoryName?: string;
@@ -33,13 +31,7 @@ export async function getActiveSections(): Promise<HomeSection[]> {
     return sections.map((s: any) => ({ ...s, id: s.id || s._id.toString() })) as unknown as HomeSection[];
 }
 
-export async function getSectionsByModule(module: StoreModule): Promise<HomeSection[]> {
-    return getAllSections();
-}
-
-export async function getActiveSectionsByModule(module: StoreModule): Promise<HomeSection[]> {
-    return getActiveSections();
-}
+// Sem filtro por módulo
 
 export async function getSectionById(id: string): Promise<HomeSection | undefined> {
     await connectDB();

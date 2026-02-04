@@ -53,7 +53,6 @@ async function getRecommendations(currentProduct: Product) {
                 if (p.category === currentProduct.category) score += 5;
                 if (p.brandId && p.brandId === currentProduct.brandId) score += 4;
                 if (p.modelId && p.modelId === currentProduct.modelId) score += 3;
-                if (p.league && p.league === currentProduct.league) score += 2;
 
                 // Fallback para campos automotivos manuais
                 if (p.automotiveFields?.brand && p.automotiveFields.brand === currentProduct.automotiveFields?.brand) score += 4;

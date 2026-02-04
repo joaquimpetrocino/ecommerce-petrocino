@@ -6,7 +6,7 @@ import { getAllQuestions } from "./product-questions";
 import { getAllSections } from "./home-sections";
 
 // Função interna que busca os dados
-async function fetchStats(currentModule: string) {
+async function fetchStats() {
     const [products, categories, questions, sections] = await Promise.all([
         getAllProducts(),
         getAllCategories(),
@@ -47,10 +47,10 @@ async function fetchStats(currentModule: string) {
 }
 
 // Wrapper com cache
-export async function getCachedDashboardStats(currentModule: string) {
+export async function getCachedDashboardStats() {
     return unstable_cache(
-        () => fetchStats(currentModule),
-        ["dashboard-stats", currentModule],
+        () => fetchStats(),
+        ["dashboard-stats"],
         {
             tags: ["dashboard-stats", "stats"],
             revalidate: 3600 // 1 hora de fallback

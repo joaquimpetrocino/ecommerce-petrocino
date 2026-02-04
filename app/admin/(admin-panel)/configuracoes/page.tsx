@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Save, Store, Mail, Package } from "lucide-react";
 import { UploadDropzone } from "@/lib/uploadthing";
 import { toast } from "sonner";
-import { StoreConfig, HeroConfig, DEFAULT_WHATSAPP_TEMPLATE } from "@/types";
+import { StoreConfig, HeroConfig, DEFAULT_WHATSAPP_TEMPLATE, DEFAULT_RECOVERY_TEMPLATE } from "@/types";
 
 export default function SettingsPage() {
     const [config, setConfig] = useState<StoreConfig | null>(null);
@@ -378,44 +378,56 @@ export default function SettingsPage() {
                     )}
 
                     {config.enableWhatsApp && (
-                        <div className="pt-4 border-t border-neutral-100">
+                        <div className="grid gap-6 md:grid-cols-2">
+                        <div>
                             <div className="flex items-center justify-between mb-2">
                                 <label className="block text-sm font-body font-medium text-neutral-700">
-                                    Template da Mensagem
+                                    Mensagem de Pedido (Checkout)
                                 </label>
                                 <button
+                                    type="button"
                                     onClick={() => updateConfig("whatsappTemplate", DEFAULT_WHATSAPP_TEMPLATE)}
-                                    className="text-[10px] font-bold uppercase text-primary hover:underline"
+                                    className="text-xs text-primary hover:text-primary-dark font-body font-bold uppercase"
                                 >
-                                    Resetar para Padrão
+                                    Restaurar Padrão
                                 </button>
                             </div>
                             <textarea
-                                value={config.whatsappTemplate || ""}
+                                value={config.whatsappTemplate || DEFAULT_WHATSAPP_TEMPLATE}
                                 onChange={(e) => updateConfig("whatsappTemplate", e.target.value)}
-                                className="w-full h-64 px-4 py-3 border border-neutral-300 rounded-lg font-mono text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-y"
-                                placeholder="Configure aqui o layout da mensagem..."
+                                rows={10}
+                                className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body text-sm font-mono focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                             />
-                            <div className="mt-2 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
-                                <p className="text-[10px] font-bold uppercase text-neutral-500 mb-2">Variáveis Disponíveis:</p>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                    {[
-                                        { v: "{{orderId}}", d: "ID do Pedido" },
-                                        { v: "{{customerName}}", d: "Nome do Cliente" },
-                                        { v: "{{customerPhone}}", d: "Telefone" },
-                                        { v: "{{customerAddress}}", d: "Endereço" },
-                                        { v: "{{paymentMethod}}", d: "Forma de Pagamento" },
-                                        { v: "{{items}}", d: "Lista de Produtos" },
-                                        { v: "{{total}}", d: "Valor Total" },
-                                    ].map(item => (
-                                        <div key={item.v} className="flex flex-col">
-                                            <code className="text-primary text-[10px] font-bold">{item.v}</code>
-                                            <span className="text-[9px] text-neutral-400 uppercase">{item.d}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+                            <p className="text-xs text-neutral-500 mt-2">
+                                Variáveis: {"{{orderId}}"}, {"{{customerName}}"}, {"{{customerPhone}}"}, {"{{customerAddress}}"}, {"{{items}}"}, {"{{total}}"}, {"{{paymentMethod}}"}
+                            </p>
                         </div>
+
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-sm font-body font-medium text-neutral-700">
+                                    Mensagem de Recuperação (Reenvio)
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={() => updateConfig("whatsappRecoveryTemplate", DEFAULT_RECOVERY_TEMPLATE)}
+                                    className="text-xs text-primary hover:text-primary-dark font-body font-bold uppercase"
+                                >
+                                    Restaurar Padrão
+                                </button>
+                            </div>
+                            <textarea
+                                value={config.whatsappRecoveryTemplate || DEFAULT_RECOVERY_TEMPLATE}
+                                onChange={(e) => updateConfig("whatsappRecoveryTemplate", e.target.value)}
+                                rows={10}
+                                className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body text-sm font-mono focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                placeholder="Modelo de mensagem para recuperação de pedido..."
+                            />
+                            <p className="text-xs text-neutral-500 mt-2">
+                                Mesmas variáveis disponíveis.
+                            </p>
+                        </div>
+                    </div>
                     )}
                 </div>
             </div>

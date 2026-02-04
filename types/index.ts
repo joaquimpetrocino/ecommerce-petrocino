@@ -1,6 +1,3 @@
-// Tipos de módulo da loja
-export type StoreModule = "sports" | "automotive" | "unified";
-
 // Estrutura dinâmica de categorias e ligas
 export interface Category {
   id: string;
@@ -9,19 +6,12 @@ export interface Category {
   description?: string;
   active: boolean;
   showInNavbar: boolean;
-  module: StoreModule;
-  parentId?: string;
+  parentId?: string; // Deprecated
+  parentIds?: string[]; // New: Multiple parents support
 }
 
-export interface League {
-  id: string;
-  name: string;
-  slug: string;
-  active: boolean;
-  module: StoreModule;
-}
 export type VariantType = "roupa" | "calcado";
-export type OrderStatus = "pendente" | "confirmado" | "enviado" | "entregue" | "cancelado";
+export type OrderStatus = "pendente" | "confirmado" | "cancelado";
 
 // Cor do produto (para artigos esportivos)
 export interface ProductColor {
@@ -32,7 +22,9 @@ export interface ProductColor {
 export interface ProductVariant {
   type?: VariantType;
   size: string; // "P", "M", "G", "GG" ou "37", "38", etc
+  color?: string; // Nome da cor (vinculado a ProductColor.name)
   stock: number;
+  allowCustomization?: boolean; // New: Variant-level customization
 }
 
 // Campos específicos para peças automotivas
@@ -52,15 +44,17 @@ export interface Product {
   description: string;
   price: number;
   images: string[];
-  category: string; // Slug ou ID
-  subCategory?: string; // Slug ou ID da subcategoria
-  league?: string; // Slug ou ID
+  categories: string[]; // IDs/Slugs array
+  subCategories: string[]; // IDs/Slugs array
+  category?: string; // Deprecated
+  subCategory?: string; // Deprecated
   variants: ProductVariant[];
   featured: boolean;
   active: boolean; // Controla visibilidade na loja
-  module?: StoreModule; // Deprecated but kept for compatibility
-  brandId?: string;
-  modelId?: string;
+  brands: string[]; // IDs array
+  models: string[]; // IDs array
+  brandId?: string; // Deprecated
+  modelId?: string; // Deprecated
   colors?: ProductColor[]; // Cores disponíveis (apenas para sports)
   automotiveFields?: AutomotiveFields; // Campos específicos para automotive
   allowCustomization?: boolean; // Permite personalização (nome/número)
@@ -71,6 +65,7 @@ export interface CartItem {
   productId: string;
   variantSize: string;
   quantity: number;
+  color?: string;
   customName?: string;
   customNumber?: string;
 }
@@ -86,6 +81,8 @@ export interface OrderItem {
   variantSize: string;
   quantity: number;
   unitPrice: number;
+  customizationPrice?: number; // Preço da personalização (já incluído no unitPrice, apenas para exibição)
+  color?: string;
   customName?: string;
   customNumber?: string;
 }
@@ -127,11 +124,11 @@ export interface StoreConfig {
   storeComplement: string;
   logoUrl: string;
   whatsappNumber: string;
-  enableWhatsApp: boolean;
-  whatsappTemplate?: string;
-  updatedAt: number;
+    enableWhatsApp: boolean;
+    whatsappTemplate?: string;
+    whatsappRecoveryTemplate?: string;
+    updatedAt: number;
   hero: HeroConfig;
-  module?: StoreModule;
 }
 
 export const DEFAULT_WHATSAPP_TEMPLATE = `*NOVO PEDIDO #{{orderId}}*
@@ -151,9 +148,21 @@ export const DEFAULT_WHATSAPP_TEMPLATE = `*NOVO PEDIDO #{{orderId}}*
 
 *PAGAMENTO*
 *Método:* {{paymentMethod}}
+*Parcelas:* {{installments}}
 
 ───────────────────
 
 *TOTAL: {{total}}*
 ───────────────────
 _Pedido gerado via Site_`;
+
+export const DEFAULT_RECOVERY_TEMPLATE = `Olá *{{customerName}}*!
+
+Notamos que seu pedido *#{{orderId}}* está pendente.
+
+*RESUMO DO PEDIDO:*
+{{items}}
+*Total: {{total}}*
+
+Podemos ajudar a finalizar sua compra?
+Se tiver dúvidas, estamos à disposição!`;

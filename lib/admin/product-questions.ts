@@ -1,4 +1,3 @@
-import { StoreModule } from "@/types";
 import connectDB from "@/lib/db";
 import { ProductQuestion as ProductQuestionModel } from "@/lib/models/question";
 import { unstable_cache } from "next/cache";
@@ -15,7 +14,6 @@ export interface ProductQuestion {
     status: "pending" | "approved" | "rejected";
     createdAt: number;
     answeredAt?: number;
-    module: StoreModule;
 }
 
 // Obter todas as perguntas (Admin)
@@ -25,18 +23,13 @@ export async function getAllQuestions(): Promise<ProductQuestion[]> {
     return questions.map((q: any) => ({ ...q, id: q.id || q._id.toString() })) as unknown as ProductQuestion[];
 }
 
-// Obter perguntas por módulo (Admin)
-export async function getQuestionsByModule(module: StoreModule): Promise<ProductQuestion[]> {
-    await connectDB();
-    const questions = await ProductQuestionModel.find({ module }).sort({ createdAt: -1 }).lean();
-    return questions.map((q: any) => ({ ...q, id: q.id || q._id.toString() })) as unknown as ProductQuestion[];
-}
+// Removido filtro por módulo
 
 // Versão cacheada para o dashboard
-export async function getCachedQuestionsByModule(module: StoreModule) {
+export async function getCachedQuestionsByModule() {
     return unstable_cache(
-        async () => getQuestionsByModule(module),
-        ["questions-list", module],
+        async () => getAllQuestions(),
+        ["questions-list", "all"],
         { tags: ["questions"] }
     )();
 }

@@ -4,14 +4,10 @@ const CategorySchema = new Schema({
     id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     slug: { type: String, required: true, unique: true },
-    module: {
-        type: String,
-        required: false,
-        enum: ["sports", "automotive"]
-    },
     active: { type: Boolean, default: true },
     showInNavbar: { type: Boolean, default: false },
-    parentId: { type: String, default: null }, // ID da categoria pai (se houver)
+    parentId: { type: String, default: null }, // Deprecated: Use parentIds
+    parentIds: { type: [String], default: [] }, // Lista de IDs das categorias pai
     image: { type: String }
 }, {
     timestamps: true

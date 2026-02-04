@@ -25,7 +25,6 @@ export async function getStoreConfig(): Promise<StoreConfig> {
             enableWhatsApp: true,
             whatsappTemplate: DEFAULT_WHATSAPP_TEMPLATE,
             updatedAt: Date.now(),
-            module: "unified",
             hero: {
                 title: "Bem-vindo",
                 subtitle: "Confira nossas ofertas.",
@@ -48,7 +47,6 @@ export async function getStoreConfig(): Promise<StoreConfig> {
         logoUrl: config.logoUrl || "",
         whatsappNumber: config.whatsappNumber || "",
         whatsappTemplate: config.whatsappTemplate || DEFAULT_WHATSAPP_TEMPLATE,
-        module: config.module || "unified",
         hero: config.hero || {
             title: "Bem-vindo",
             subtitle: "Confira nossas ofertas.",

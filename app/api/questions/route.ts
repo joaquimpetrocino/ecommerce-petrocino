@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApprovedQuestionsByProduct, createQuestion } from "@/lib/admin/product-questions";
-import { getStoreConfig } from "@/lib/admin/store-config";
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
@@ -30,16 +29,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
-        const storeConfig = await getStoreConfig();
-
         const newQuestion = await createQuestion({
             productId,
             productName,
             productImage,
             userName,
             userEmail,
-            question,
-            module: storeConfig.module
+            question
         });
 
         return NextResponse.json(newQuestion, { status: 201 });

@@ -23,12 +23,6 @@ const categoryLabels: Record<string, string> = {
     carroceria: "Carroceria"
 };
 
-const leagueLabels: Record<string, string> = {
-    brasileirao: "Brasileirão",
-    champions: "Champions",
-    selecoes: "Seleções",
-};
-
 const IMAGE_FALLBACK = "/images/placeholder.png";
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -48,13 +42,8 @@ export function ProductCard({ product }: ProductCardProps) {
                         </span>
                     )}
                     <span className="bg-primary text-white px-3 py-1 rounded-full text-[10px] uppercase tracking-tighter font-body font-bold shadow-md">
-                        {categoryLabels[product.category] || product.category}
+                        {(product.category && categoryLabels[product.category]) || product.category || "Produto"}
                     </span>
-                    {product.league && (
-                        <span className="bg-accent text-white px-3 py-1 rounded-full text-[10px] uppercase tracking-tighter font-body font-bold shadow-md">
-                            {leagueLabels[product.league] || product.league}
-                        </span>
-                    )}
                 </div>
 
                 {/* Image */}
