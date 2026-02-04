@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { Sidebar } from "@/components/admin/sidebar";
+import AdminLayoutWrapper from "@/components/admin/admin-layout-wrapper";
 
 export default async function AdminPanelLayout({
     children,
@@ -15,11 +15,8 @@ export default async function AdminPanelLayout({
     }
 
     return (
-        <div className="flex min-h-screen bg-neutral-50 font-body">
-            <Sidebar />
-            <main className="flex-1 p-8">
-                {children}
-            </main>
-        </div>
+        <AdminLayoutWrapper>
+            {children}
+        </AdminLayoutWrapper>
     );
 }

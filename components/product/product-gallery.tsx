@@ -10,7 +10,7 @@ interface ProductGalleryProps {
     productName: string;
 }
 
-const IMAGE_FALLBACK = "https://images.unsplash.com/photo-1584824486509-112e4181ff6b?q=80&w=800&auto=format&fit=crop";
+const IMAGE_FALLBACK = "/images/placeholder.png";
 
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -30,14 +30,20 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
     if (!images || images.length === 0) {
         return (
-            <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100 flex items-center justify-center text-neutral-400">
-                Sem imagem
+            <div className="relative aspect-square overflow-hidden rounded-lg bg-neutral-100 flex items-center justify-center">
+                <Image
+                    src={IMAGE_FALLBACK}
+                    alt={productName}
+                    fill
+                    className="object-cover opacity-50 transition-transform duration-300"
+                />
+                <span className="absolute bottom-4 text-xs font-bold uppercase text-neutral-400 bg-white/80 px-3 py-1 rounded-full shadow-sm z-10 italic">Sem imagem disponível</span>
             </div>
         );
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-2">
             {/* Imagem principal */}
             <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
                 <Image

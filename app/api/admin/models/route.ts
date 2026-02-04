@@ -5,10 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(req.url);
-    const module = searchParams.get("module") || "sports";
     const brandId = searchParams.get("brandId");
 
-    const query: any = { module, active: true };
+    const query: any = { active: true };
     if (brandId) query.brandId = brandId;
 
     const models = await Model.find(query).sort({ name: 1 }).lean();

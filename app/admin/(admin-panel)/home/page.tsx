@@ -17,6 +17,8 @@ export default function HomeSectionsPage() {
     const [sections, setSections] = useState<HomeSection[]>([]);
     const [products, setProducts] = useState<any[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
+    const [brands, setBrands] = useState<any[]>([]);
+    const [models, setModels] = useState<any[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [isActionLoading, setIsActionLoading] = useState(false);
@@ -62,6 +64,62 @@ export default function HomeSectionsPage() {
         module: currentModule,
     });
 
+    // CTA Link Builder State
+    const [builderCategory, setBuilderCategory] = useState("");
+    const [builderSubCategory, setBuilderSubCategory] = useState("");
+    const [builderBrand, setBuilderBrand] = useState("");
+    const [builderModel, setBuilderModel] = useState("");
+    const [isManualLink, setIsManualLink] = useState(false);
+
+    // Update builder state based on current ctaLink when editing
+    useEffect(() => {
+        if (showForm && formData.type === "cta" && formData.ctaLink) {
+            const url = new URL(formData.ctaLink, "http://localhost"); // base for relative parsing
+            const category = url.searchParams.get("category");
+            const subcategory = url.searchParams.get("subcategory");
+            const brandId = url.searchParams.get("brandId");
+            const modelId = url.searchParams.get("modelId");
+
+            if (category) setBuilderCategory(category);
+            if (subcategory) setBuilderSubCategory(subcategory);
+            if (brandId) setBuilderBrand(brandId);
+            if (modelId) setBuilderModel(modelId);
+
+            // If it's a regular link builder path
+            if (formData.ctaLink.startsWith("/produtos")) {
+                setIsManualLink(false);
+            } else {
+                setIsManualLink(true);
+            }
+        } else if (showForm && !editingId) {
+            // New CTA
+            setBuilderCategory("");
+            setBuilderBrand("");
+            setBuilderModel("");
+            setIsManualLink(false);
+        }
+    }, [showForm, formData.type, editingId]);
+
+    // Update ctaLink when builder states change
+    useEffect(() => {
+        if (isManualLink) return;
+
+        const params = new URLSearchParams();
+        if (builderCategory) params.append("category", builderCategory);
+        if (builderSubCategory) params.append("subcategory", builderSubCategory);
+        if (builderBrand) params.append("brandId", builderBrand);
+        if (builderModel) params.append("modelId", builderModel);
+
+        const queryString = params.toString();
+        const link = `/produtos${queryString ? `?${queryString}` : ""}`;
+
+        if (formData.type === "cta") {
+            setFormData(prev => ({ ...prev, ctaLink: link }));
+        }
+    }, [builderCategory, builderBrand, builderModel, isManualLink]);
+
+    // Filter states for product selection
+
     // Filter states for product selection
     const [searchTerm, setSearchTerm] = useState("");
     const [filterCategory, setFilterCategory] = useState("");
@@ -83,7 +141,10 @@ export default function HomeSectionsPage() {
         if (!loading) {
             fetchSections();
             fetchProducts();
+            fetchProducts();
             fetchCategories();
+            fetchBrands();
+            fetchModels();
         }
     }, [currentModule, loading]);
 
@@ -105,6 +166,18 @@ export default function HomeSectionsPage() {
         const res = await fetch(`/api/admin/categories?module=${currentModule}`);
         const data = await res.json();
         setCategories(data);
+    };
+
+    const fetchBrands = async () => {
+        const res = await fetch(`/api/admin/brands`);
+        const data = await res.json();
+        setBrands(data);
+    };
+
+    const fetchModels = async () => {
+        const res = await fetch(`/api/admin/models`);
+        const data = await res.json();
+        setModels(data);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -221,17 +294,44 @@ export default function HomeSectionsPage() {
         setFormData({ ...formData, productIds: updated });
     };
 
+    const handleSelectAllFiltered = () => {
+        const filtered = products
+            .filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesCategory = filterCategory ? p.category === filterCategory : true;
+                return matchesSearch && matchesCategory;
+            })
+            .map(p => p.id);
+
+        const currentIds = formData.productIds || [];
+        const allFilteredAlreadySelected = filtered.every(id => currentIds.includes(id));
+
+        if (allFilteredAlreadySelected) {
+            // Remove all filtered from selection
+            setFormData({
+                ...formData,
+                productIds: currentIds.filter(id => !filtered.includes(id))
+            });
+        } else {
+            // Add all filtered to selection (without duplicates)
+            setFormData({
+                ...formData,
+                productIds: Array.from(new Set([...currentIds, ...filtered]))
+            });
+        }
+    };
+
     return (
         <div className="space-y-6 pb-20">
 
 
 
-            <div className="flex items-center justify-between pt-4 mt-4">
-                <div>
-                    <h2 className="font-heading font-bold text-neutral-900 text-2xl uppercase tracking-tight">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 mt-4 gap-4">
+                <div className="flex-1">
+                    <h2 className="font-heading font-bold text-neutral-900 text-2xl uppercase tracking-tight leading-tight">
                         Outras Seções da Home
                     </h2>
-                    <p className="text-neutral-600 font-body mt-1">
+                    <p className="text-neutral-600 font-body mt-1 text-sm sm:text-base">
                         Gerencie os grids de produtos e CTAs intermediários
                     </p>
                 </div>
@@ -241,7 +341,7 @@ export default function HomeSectionsPage() {
                         setEditingId(null);
                         resetForm();
                     }}
-                    className="bg-accent hover:bg-accent-dark text-white px-6 py-3 rounded-lg font-heading font-bold uppercase flex items-center gap-2 transition-colors"
+                    className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-heading font-bold uppercase flex items-center justify-center gap-2 transition-colors shrink-0"
                 >
                     <Plus className="w-5 h-5" />
                     Nova Seção
@@ -345,8 +445,37 @@ export default function HomeSectionsPage() {
                                 </div>
                             </div>
 
-                            <div className="border border-neutral-300 rounded-lg p-4 max-h-64 overflow-y-auto">
-                                <div className="grid gap-2">
+                            <div className="border border-neutral-300 rounded-lg p-0 max-h-64 overflow-y-auto">
+                                <div className="sticky top-0 bg-neutral-100 border-b border-neutral-200 p-2 z-10 flex items-center justify-between">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            onChange={handleSelectAllFiltered}
+                                            checked={
+                                                products.filter(p => {
+                                                    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+                                                    const matchesCategory = filterCategory ? p.category === filterCategory : true;
+                                                    return matchesSearch && matchesCategory;
+                                                }).length > 0 &&
+                                                products.filter(p => {
+                                                    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+                                                    const matchesCategory = filterCategory ? p.category === filterCategory : true;
+                                                    return matchesSearch && matchesCategory;
+                                                }).every(p => formData.productIds?.includes(p.id))
+                                            }
+                                            className="w-4 h-4 rounded border-neutral-300 text-primary focus:ring-primary"
+                                        />
+                                        <span className="text-xs font-bold uppercase text-neutral-600 group-hover:text-primary transition-colors">Selecionar todos os filtrados</span>
+                                    </label>
+                                    <span className="text-[10px] font-bold text-neutral-400 uppercase">
+                                        {products.filter(p => {
+                                            const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+                                            const matchesCategory = filterCategory ? p.category === filterCategory : true;
+                                            return matchesSearch && matchesCategory;
+                                        }).length} Produtos
+                                    </span>
+                                </div>
+                                <div className="grid gap-0 divide-y divide-neutral-100 p-2">
                                     {products
                                         .filter(p => {
                                             const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -376,7 +505,10 @@ export default function HomeSectionsPage() {
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="font-body font-semibold text-sm truncate">{product.name}</p>
-                                                    <p className="text-xs text-neutral-600 truncate">{product.category} • {product.brand ? "Marca X" : "Genérico"}</p>
+                                                    <p className="text-xs text-neutral-600 truncate">
+                                                        {product.category}
+                                                        {product.brandId && ` • ${brands.find(b => b.id === product.brandId)?.name || 'Marca'}`}
+                                                    </p>
                                                 </div>
                                                 {formData.productIds?.includes(product.id) && (
                                                     <span className="text-xs font-bold text-primary bg-primary/10 px-2 py-1 rounded">Selecionado</span>
@@ -408,19 +540,111 @@ export default function HomeSectionsPage() {
 
                             <div>
                                 <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
-                                    Link do Botão
+                                    Link de Destino
                                 </label>
-                                <input
-                                    type="text"
-                                    value={formData.ctaLink}
-                                    onChange={(e) => setFormData({ ...formData, ctaLink: e.target.value })}
-                                    className="w-full px-4 py-2 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
-                                    placeholder="Ex: /produtos?category=chuteiras ou /produtos"
-                                    required
-                                />
-                                <p className="text-xs text-neutral-500 mt-1">
-                                    Use /produtos?category=slug para filtrar por categoria
-                                </p>
+                                <div className="space-y-4 bg-neutral-50 p-4 rounded-xl border border-neutral-200">
+                                    <div className="flex items-center gap-4 mb-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsManualLink(false)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${!isManualLink ? 'bg-primary text-white' : 'bg-neutral-200 text-neutral-500'}`}
+                                        >
+                                            Construtor
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsManualLink(true)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-all ${isManualLink ? 'bg-primary text-white' : 'bg-neutral-200 text-neutral-500'}`}
+                                        >
+                                            Manual
+                                        </button>
+                                    </div>
+
+                                    {!isManualLink ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase text-neutral-500">Categoria</label>
+                                                <select
+                                                    value={builderCategory}
+                                                    onChange={(e) => {
+                                                        setBuilderCategory(e.target.value);
+                                                        setBuilderSubCategory(""); // reset subcategory
+                                                    }}
+                                                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg outline-none text-sm"
+                                                >
+                                                    <option value="">Todas</option>
+                                                    {categories.filter(c => !c.parentId).map(c => (
+                                                        <option key={c.id} value={c.slug}>{c.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase text-neutral-500">Subcategoria</label>
+                                                <select
+                                                    value={builderSubCategory}
+                                                    onChange={(e) => setBuilderSubCategory(e.target.value)}
+                                                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg outline-none text-sm disabled:bg-neutral-100"
+                                                    disabled={!builderCategory}
+                                                >
+                                                    <option value="">Todas</option>
+                                                    {categories.filter(c => c.parentId && categories.find(p => p.id === c.parentId)?.slug === builderCategory).map(c => (
+                                                        <option key={c.id} value={c.slug}>{c.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase text-neutral-500">Marca</label>
+                                                <select
+                                                    value={builderBrand}
+                                                    onChange={(e) => {
+                                                        setBuilderBrand(e.target.value);
+                                                        setBuilderModel(""); // reset model when brand changes
+                                                    }}
+                                                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg outline-none text-sm"
+                                                >
+                                                    <option value="">Todas</option>
+                                                    {brands.map(b => (
+                                                        <option key={b.id} value={b.id}>{b.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-bold uppercase text-neutral-500">Modelo</label>
+                                                <select
+                                                    value={builderModel}
+                                                    onChange={(e) => setBuilderModel(e.target.value)}
+                                                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg outline-none text-sm disabled:bg-neutral-100"
+                                                    disabled={!builderBrand}
+                                                >
+                                                    <option value="">Todos</option>
+                                                    {models.filter(m => m.brandId === builderBrand).map(m => (
+                                                        <option key={m.id} value={m.id}>{m.name}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold uppercase text-neutral-500">URL Manual</label>
+                                            <input
+                                                type="text"
+                                                value={formData.ctaLink}
+                                                onChange={(e) => setFormData({ ...formData, ctaLink: e.target.value })}
+                                                className="w-full px-3 py-2 border border-neutral-300 rounded-lg outline-none text-sm font-mono"
+                                                placeholder="Ex: /produtos?oferta=promo"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {!isManualLink && (
+                                        <div className="pt-2 border-t border-neutral-200">
+                                            <label className="text-[10px] font-bold uppercase text-neutral-500 block mb-1">URL Gerada:</label>
+                                            <div className="bg-white p-2 border border-neutral-200 rounded font-mono text-xs text-primary truncate">
+                                                {formData.ctaLink || '/produtos'}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="space-y-3">
@@ -446,7 +670,7 @@ export default function HomeSectionsPage() {
                                         onClientUploadComplete={(res) => {
                                             if (res && res[0]) setFormData({ ...formData, backgroundImage: res[0].url });
                                         }}
-                                        onUploadError={(error: Error) => alert(`Erro: ${error.message}`)}
+                                        onUploadError={(error: Error) => { toast.error(`Erro: ${error.message}`); }}
                                         appearance={{
                                             button: "bg-primary text-white font-bold font-heading uppercase p-2 text-sm",
                                             container: "p-4 border-2 border-dashed border-neutral-200 rounded-lg bg-neutral-50 h-32"
@@ -484,68 +708,74 @@ export default function HomeSectionsPage() {
                 {sections.map((section, index) => (
                     <div
                         key={section.id}
-                        className={`bg-white rounded-xl border-2 p-6 transition-all ${section.active ? "border-neutral-200" : "border-neutral-100 opacity-60"
+                        className={`bg-white rounded-xl border-2 p-4 sm:p-6 transition-all ${section.active ? "border-neutral-200" : "border-neutral-100 opacity-60"
                             }`}
                     >
-                        <div className="flex items-start gap-4">
-                            <div className="flex flex-col gap-2">
-                                <button
-                                    onClick={() => moveSection(index, "up")}
-                                    disabled={index === 0}
-                                    className="p-1 text-neutral-400 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed"
-                                >
-                                    <ArrowUp className="w-4 h-4" />
-                                </button>
-                                <GripVertical className="w-5 h-5 text-neutral-400" />
-                                <button
-                                    onClick={() => moveSection(index, "down")}
-                                    disabled={index === sections.length - 1}
-                                    className="p-1 text-neutral-400 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed"
-                                >
-                                    <ArrowDown className="w-4 h-4" />
-                                </button>
-                            </div>
-
-                            <div className="flex-1">
-                                <div className="flex items-start justify-between mb-2">
-                                    <div>
-                                        <h3 className="font-heading font-bold text-neutral-900 text-xl uppercase">
-                                            {section.title}
-                                        </h3>
-                                        <p className="text-sm text-neutral-600 font-body">{section.description}</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span
-                                            className={`px-3 py-1 rounded-full text-xs font-body font-semibold ${section.type === "featured"
-                                                ? "bg-accent/10 text-accent"
-                                                : section.type === "category"
-                                                    ? "bg-primary/10 text-primary"
-                                                    : "bg-green-100 text-green-700"
-                                                }`}
-                                        >
-                                            {section.type === "featured"
-                                                ? "Destaque"
-                                                : section.type === "category"
-                                                    ? "Categoria"
-                                                    : "CTA"}
-                                        </span>
-                                    </div>
+                        <div className="flex flex-col sm:flex-row items-start gap-4">
+                            {/* Reorder and Content Wrapper */}
+                            <div className="flex items-start gap-4 flex-1 w-full">
+                                <div className="flex flex-col gap-2 shrink-0">
+                                    <button
+                                        onClick={() => moveSection(index, "up")}
+                                        disabled={index === 0}
+                                        className="p-1 text-neutral-400 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                        <ArrowUp className="w-4 h-4" />
+                                    </button>
+                                    <GripVertical className="w-5 h-5 text-neutral-400 self-center" />
+                                    <button
+                                        onClick={() => moveSection(index, "down")}
+                                        disabled={index === sections.length - 1}
+                                        className="p-1 text-neutral-400 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                                    >
+                                        <ArrowDown className="w-4 h-4" />
+                                    </button>
                                 </div>
 
-                                {section.type === "cta" && (
-                                    <p className="text-sm text-neutral-600 font-body">
-                                        Link: <span className="font-semibold">{section.ctaLink || "Não configurado"}</span>
-                                    </p>
-                                )}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex flex-col md:flex-row md:items-start justify-between mb-2 gap-2">
+                                        <div className="min-w-0">
+                                            <h3 className="font-heading font-bold text-neutral-900 text-xl uppercase leading-tight truncate-words">
+                                                {section.title}
+                                            </h3>
+                                            <p className="text-sm text-neutral-600 font-body mt-1">{section.description}</p>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <span
+                                                className={`px-3 py-1 rounded-full text-[10px] sm:text-xs font-body font-semibold ${section.type === "featured"
+                                                    ? "bg-accent/10 text-accent"
+                                                    : section.type === "category"
+                                                        ? "bg-primary/10 text-primary"
+                                                        : "bg-green-100 text-green-700"
+                                                    }`}
+                                            >
+                                                {section.type === "featured"
+                                                    ? "Destaque"
+                                                    : section.type === "category"
+                                                        ? "Categoria"
+                                                        : "CTA"}
+                                            </span>
+                                        </div>
+                                    </div>
 
-                                {(section.type === "featured" || section.type === "category") && (
-                                    <p className="text-sm text-neutral-600 font-body">
-                                        {section.productIds?.length || 0} produtos selecionados
-                                    </p>
-                                )}
+                                    <div className="space-y-1">
+                                        {section.type === "cta" && (
+                                            <p className="text-xs sm:text-sm text-neutral-600 font-body break-all">
+                                                Link: <span className="font-semibold">{section.ctaLink || "Não configurado"}</span>
+                                            </p>
+                                        )}
+
+                                        {(section.type === "featured" || section.type === "category") && (
+                                            <p className="text-xs sm:text-sm text-neutral-600 font-body">
+                                                {section.productIds?.length || 0} produtos selecionados
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="flex items-center gap-2">
+                            {/* Actions Wrapper */}
+                            <div className="flex items-center gap-1 sm:gap-2 ml-9 sm:ml-0 bg-neutral-50 sm:bg-transparent p-2 sm:p-0 rounded-lg w-fit">
                                 <button
                                     onClick={() => toggleActive(section)}
                                     className={`p-2 rounded-lg transition-colors ${section.active

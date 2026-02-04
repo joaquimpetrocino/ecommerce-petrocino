@@ -6,8 +6,7 @@ export async function GET() {
 
     // Retornar apenas dados necessários para o layout público
     return NextResponse.json({
-        storeName: storeConfig.module === "sports" ? "LeagueSports" : "AutoParts Online",
-        module: storeConfig.module,
+        storeName: storeConfig.storeName,
         logoUrl: storeConfig.logoUrl,
         whatsappNumber: storeConfig.whatsappNumber,
         enableWhatsApp: storeConfig.enableWhatsApp

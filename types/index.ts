@@ -1,5 +1,5 @@
 // Tipos de módulo da loja
-export type StoreModule = "sports" | "automotive";
+export type StoreModule = "sports" | "automotive" | "unified";
 
 // Estrutura dinâmica de categorias e ligas
 export interface Category {
@@ -53,10 +53,12 @@ export interface Product {
   price: number;
   images: string[];
   category: string; // Slug ou ID
+  subCategory?: string; // Slug ou ID da subcategoria
   league?: string; // Slug ou ID
   variants: ProductVariant[];
   featured: boolean;
-  module: StoreModule; // Módulo ao qual o produto pertence
+  active: boolean; // Controla visibilidade na loja
+  module?: StoreModule; // Deprecated but kept for compatibility
   brandId?: string;
   modelId?: string;
   colors?: ProductColor[]; // Cores disponíveis (apenas para sports)
@@ -79,6 +81,7 @@ export interface Cart {
 }
 
 export interface OrderItem {
+  productId: string;
   productName: string;
   variantSize: string;
   quantity: number;
@@ -91,6 +94,8 @@ export interface CustomerData {
   name: string;
   phone: string;
   address?: string;
+  paymentMethod?: string;
+  installments?: string;
 }
 
 export interface Order {
@@ -104,3 +109,51 @@ export interface Order {
   updatedAt: number;
   notes?: string; // Notas do admin
 }
+export interface HeroConfig {
+  title: string;
+  subtitle: string;
+  bannerUrl: string;
+  badge: string;
+}
+
+export interface StoreConfig {
+  id: string;
+  storeName: string;
+  storeEmail: string;
+  storePhone: string;
+  storeAddress: string;
+  storeCEP: string;
+  storeNumber: string;
+  storeComplement: string;
+  logoUrl: string;
+  whatsappNumber: string;
+  enableWhatsApp: boolean;
+  whatsappTemplate?: string;
+  updatedAt: number;
+  hero: HeroConfig;
+  module?: StoreModule;
+}
+
+export const DEFAULT_WHATSAPP_TEMPLATE = `*NOVO PEDIDO #{{orderId}}*
+───────────────────
+
+*DADOS DO CLIENTE*
+*Nome:* {{customerName}}
+*Telefone:* {{customerPhone}}
+*Endereço:* {{customerAddress}}
+
+───────────────────
+
+*ITENS DO PEDIDO*
+{{items}}
+
+───────────────────
+
+*PAGAMENTO*
+*Método:* {{paymentMethod}}
+
+───────────────────
+
+*TOTAL: {{total}}*
+───────────────────
+_Pedido gerado via Site_`;

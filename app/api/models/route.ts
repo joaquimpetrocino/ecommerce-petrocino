@@ -9,8 +9,17 @@ export async function GET(req: NextRequest) {
     const brandId = searchParams.get("brandId");
 
     const storeConfig = await getStoreConfig();
-    const query: any = { module: storeConfig.module, active: true };
+
+    let query: any = { active: true };
     if (brandId) query.brandId = brandId;
+
+    if (storeConfig.module !== "unified") {
+        query.$or = [
+            { module: storeConfig.module },
+            { module: "unified" },
+            { module: { $exists: false } }
+        ];
+    }
 
     const models = await Model.find(query).sort({ name: 1 }).lean();
     return NextResponse.json(models.map((m: any) => ({ ...m, id: m.id })));

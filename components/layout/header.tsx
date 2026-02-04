@@ -81,7 +81,7 @@ export function Header() {
                 {/* Logo Dinâmica */}
                 <Link href="/" className="flex items-center gap-3 group">
                     {storeInfo.logoUrl ? (
-                        <div className="relative h-24 w-auto">
+                        <div className="relative h-20 w-auto">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={storeInfo.logoUrl}
@@ -124,12 +124,12 @@ export function Header() {
                 {/* Cart Button */}
                 <Link
                     href="/carrinho"
-                    className="relative flex items-center gap-3 rounded-lg bg-accent px-6 py-3 font-body font-semibold text-white hover:bg-accent-dark transition-all hover:scale-105 hover:shadow-lg cursor-pointer"
+                    className="relative flex items-center gap-3 rounded-lg bg-primary px-6 py-3 font-body font-semibold text-white hover:bg-primary-dark transition-all hover:scale-105 hover:shadow-lg cursor-pointer"
                 >
                     <ShoppingCart className="h-5 w-5" />
                     <span className="hidden sm:inline">Carrinho</span>
                     {cartCount > 0 && (
-                        <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-white shadow-md animate-pulse">
+                        <span className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-accent text-xs font-bold text-white shadow-md animate-pulse">
                             {cartCount}
                         </span>
                     )}

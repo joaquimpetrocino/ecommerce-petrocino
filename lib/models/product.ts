@@ -28,12 +28,14 @@ const ProductSchema = new Schema({
     price: { type: Number, required: true },
     images: [{ type: String }],
     category: { type: String, required: true },
+    subCategory: { type: String },
     league: { type: String },
     variants: [ProductVariantSchema],
     featured: { type: Boolean, default: false },
+    active: { type: Boolean, default: true },
     module: {
         type: String,
-        required: true,
+        required: false, // Made optional for migration
         enum: ["sports", "automotive"]
     },
     brandId: { type: String }, // ID da marca selecionada

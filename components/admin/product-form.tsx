@@ -16,6 +16,7 @@ const productSchema = z.object({
     description: z.string().min(10, "Descrição deve ter pelo menos 10 caracteres"),
     price: z.number().min(0, "Preço deve ser maior que zero"),
     category: z.string().min(1, "Categoria é obrigatória"),
+    subCategory: z.string().optional(),
     league: z.string().optional(),
     brandId: z.string().optional(),
     modelId: z.string().optional(),
@@ -34,24 +35,6 @@ interface ProductFormProps {
 
 export function ProductForm({ product, onSubmit }: ProductFormProps) {
     const router = useRouter();
-    const [configLoading, setConfigLoading] = useState(!product);
-    const [defaultModule, setDefaultModule] = useState<StoreModule>("sports");
-
-    // Start with default module or product module
-    useEffect(() => {
-        if (!product) {
-            fetch("/api/config")
-                .then(res => res.json())
-                .then(data => {
-                    setDefaultModule(data.module);
-                    setConfigLoading(false);
-                })
-                .catch(() => setConfigLoading(false));
-        } else {
-            setDefaultModule(product.module);
-        }
-    }, [product]);
-
     const [images, setImages] = useState<string[]>(product?.images || []);
     const [variants, setVariants] = useState<ProductVariant[]>(
         product?.variants || [{ size: "", stock: 0 }]
@@ -63,10 +46,13 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         product?.automotiveFields || {}
     );
 
+    // Selected Module (Type of product)
+    const [selectedModule, setSelectedModule] = useState<StoreModule>(product?.module || "sports");
+
     // Metadata State
-    const [categories, setCategories] = useState<Category[]>([]);
+    const [allCategories, setAllCategories] = useState<Category[]>([]);
     const [leagues, setLeagues] = useState<League[]>([]);
-    const [brands, setBrands] = useState<any[]>([]);
+    const [allBrands, setAllBrands] = useState<any[]>([]);
     const [models, setModels] = useState<any[]>([]);
 
     const [loading, setLoading] = useState(false);
@@ -87,54 +73,42 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                 description: product.description,
                 price: product.price,
                 category: product.category,
+                subCategory: product.subCategory || "",
                 league: product.league,
                 brandId: product.brandId,
                 modelId: product.modelId,
                 featured: product.featured,
-                module: product.module,
+                module: product.module as "sports" | "automotive",
                 allowCustomization: product.allowCustomization || false,
                 customizationPrice: product.customizationPrice || 0,
             }
             : {
+                module: "sports",
                 allowCustomization: false,
                 customizationPrice: 0,
+                featured: false,
+                category: "",
+                subCategory: "",
             },
     });
 
     const currentBrandId = watch("brandId");
-    const allowCustomization = watch("allowCustomization"); // Watch this field to conditional render
+    const currentCategoryId = watch("category");
+    const allowCustomization = watch("allowCustomization");
 
-    // Force module update in form when valid config is loaded
-    useEffect(() => {
-        if (!product && !configLoading) {
-            setValue("module", defaultModule);
-            reset({
-                featured: false,
-                module: defaultModule,
-                allowCustomization: false,
-                customizationPrice: 0,
-            });
-        }
-    }, [defaultModule, configLoading, product, setValue, reset]);
-
-    // Fetch Metadata (Categories, Leagues, Brands) based on module
+    // Fetch Metadata (Categories, Leagues, Brands)
     useEffect(() => {
         const fetchMetadata = async () => {
-            // Only fetch if we know the module
-            if (configLoading) return;
-
             try {
-                const moduleToFetch = defaultModule;
-
                 const [catsRes, leaguesRes, brandsRes] = await Promise.all([
-                    fetch(`/api/admin/categories?module=${moduleToFetch}`),
-                    fetch(`/api/admin/leagues?module=${moduleToFetch}`),
-                    fetch(`/api/admin/brands?module=${moduleToFetch}`)
+                    fetch(`/api/admin/categories`),
+                    fetch(`/api/admin/leagues`),
+                    fetch(`/api/admin/brands`)
                 ]);
 
-                if (catsRes.ok) setCategories(await catsRes.json());
+                if (catsRes.ok) setAllCategories(await catsRes.json());
                 if (leaguesRes.ok) setLeagues(await leaguesRes.json());
-                if (brandsRes.ok) setBrands(await brandsRes.json());
+                if (brandsRes.ok) setAllBrands(await brandsRes.json());
 
             } catch (error) {
                 console.error("Erro ao carregar metadados:", error);
@@ -142,7 +116,28 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         };
 
         fetchMetadata();
-    }, [defaultModule, configLoading]);
+    }, []);
+
+    // Filtered Metadata based on module
+    // Main categories are those without parentId
+    const categories = allCategories.filter(c => (!selectedModule || c.module === selectedModule) && !c.parentId);
+    const filteredLeagues = leagues.filter(l => l.module === "sports");
+
+    // Brands should be unified or filtered if they have a specific module
+    const brands = allBrands.filter(b => !b.module || b.module === "unified" || (!selectedModule || b.module === selectedModule));
+
+    // Filter subcategories based on currentCategoryId (which is a slug)
+    // A subcategory is a category with a parentId
+    const selectedParent = allCategories.find(c => c.slug === currentCategoryId);
+    const subCategories = allCategories.filter(c => c.parentId && c.parentId === selectedParent?.id);
+
+    // Reset subcategory if it doesn't belong to the NEWly selected category
+    useEffect(() => {
+        const sub = watch("subCategory");
+        if (sub && !subCategories.find(s => s.slug === sub)) {
+            setValue("subCategory", "");
+        }
+    }, [currentCategoryId, subCategories, setValue, watch]);
 
     // Fetch Models when Brand changes
     useEffect(() => {
@@ -152,7 +147,8 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                 return;
             }
             try {
-                const res = await fetch(`/api/admin/models?module=${defaultModule}&brandId=${currentBrandId}`);
+                // Models API also needs to be unified or we just pass the brandId
+                const res = await fetch(`/api/admin/models?brandId=${currentBrandId}`);
                 if (res.ok) {
                     setModels(await res.json());
                 }
@@ -162,17 +158,17 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         };
 
         fetchModels();
-    }, [currentBrandId, defaultModule]);
+    }, [currentBrandId]);
 
-
-    if (configLoading) {
-        return (
-            <div className="flex items-center justify-center p-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                <span className="ml-2 text-neutral-600">Carregando formulário...</span>
-            </div>
-        );
-    }
+    const handleModuleChange = (module: StoreModule) => {
+        setSelectedModule(module);
+        setValue("module", module as "sports" | "automotive");
+        // Reset category if it doesn't belong to the new module
+        setValue("category", "");
+        setValue("subCategory", "");
+        setValue("brandId", "");
+        setValue("modelId", "");
+    };
 
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -225,14 +221,16 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         try {
             const productData: Product = {
                 id: product?.id || "",
+                active: product?.active ?? true,
                 ...data,
-                module: defaultModule, // Enforce current module
+                subCategory: data.subCategory || undefined,
+                module: selectedModule as any,
                 images: images,
                 variants: variants.filter((v) => v.size.trim() !== ""),
-                ...(defaultModule === "sports" && colors.length > 0 && {
+                ...(selectedModule === "sports" && colors.length > 0 && {
                     colors: colors.filter((c) => c.name.trim() !== ""),
                 }),
-                ...(defaultModule === "automotive" && {
+                ...(selectedModule === "automotive" && {
                     automotiveFields,
                 }),
             };
@@ -246,22 +244,70 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         }
     };
 
-    // Dynamic Placeholders
-    const isSports = defaultModule === "sports";
+    const isSports = selectedModule === "sports";
     const namePlaceholder = isSports ? "Ex: Camisa Flamengo 2024" : "Ex: Farol Gol G5";
     const variantPlaceholder = isSports ? "P, M, G, 42..." : "Único, PE, LE...";
 
     return (
         <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-8">
-            <input type="hidden" {...register("module")} value={defaultModule} />
+            {/* Seletor de Tipo de Produto */}
+            <div className="bg-white rounded-xl border border-neutral-200 p-6 shadow-sm">
+                <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight mb-6 flex items-center gap-2">
+                    <span className="w-2 h-6 bg-primary rounded-full"></span>
+                    Tipo de Produto
+                </h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button
+                        type="button"
+                        onClick={() => handleModuleChange("sports")}
+                        disabled={!!product} // Desabilitar se estiver editando para manter integridade
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all group ${isSports
+                            ? "border-primary bg-primary/5 ring-4 ring-primary/10"
+                            : "border-neutral-100 hover:border-neutral-300 bg-neutral-50 grayscale hover:grayscale-0"
+                            } ${!!product && "opacity-80"}`}
+                    >
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${isSports ? "bg-primary text-white" : "bg-neutral-200 text-neutral-500"}`}>
+                            👕
+                        </div>
+                        <div className="text-left">
+                            <p className={`font-heading font-bold uppercase tracking-wide text-sm ${isSports ? "text-primary" : "text-neutral-500"}`}>Artigos Esportivos</p>
+                            <p className="text-xs text-neutral-400 font-body">Roupas, Chuteiras, Acessórios</p>
+                        </div>
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={() => handleModuleChange("automotive")}
+                        disabled={!!product}
+                        className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all group ${!isSports
+                            ? "border-orange-500 bg-orange-50 ring-4 ring-orange-100"
+                            : "border-neutral-100 hover:border-neutral-300 bg-neutral-50 grayscale hover:grayscale-0"
+                            } ${!!product && "opacity-80"}`}
+                    >
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl ${!isSports ? "bg-orange-500 text-white" : "bg-neutral-200 text-neutral-500"}`}>
+                            🚗
+                        </div>
+                        <div className="text-left">
+                            <p className={`font-heading font-bold uppercase tracking-wide text-sm ${!isSports ? "text-orange-600" : "text-neutral-500"}`}>Peças Automotivas</p>
+                            <p className="text-xs text-neutral-400 font-body">Faróis, Suspensão, Motores</p>
+                        </div>
+                    </button>
+                </div>
+                {!!product && (
+                    <p className="text-xs text-neutral-500 mt-4 italic text-center">
+                        Para evitar inconsistências, o tipo de produto não pode ser alterado após a criação.
+                    </p>
+                )}
+            </div>
 
             {/* Header / Module Indicator */}
-            <div className="bg-neutral-100 border border-neutral-200 rounded-lg p-4 flex items-center gap-3">
+            {/* <div className="bg-neutral-100 border border-neutral-200 rounded-lg p-4 flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${isSports ? 'bg-blue-500' : 'bg-orange-500'}`} />
                 <p className="font-body text-sm text-neutral-700">
-                    Cadastrando produto no módulo: <span className="font-bold uppercase">{isSports ? "Artigos Esportivos" : "Peças Automotivas"}</span>
+                    Cadastrando produto como: <span className="font-bold uppercase">{isSports ? "Artigo Esportivo" : "Peça Automotiva"}</span>
                 </p>
-            </div>
+            </div> */}
 
             {/* Informações Básicas */}
             <div className="bg-white rounded-xl border border-neutral-200 p-6">
@@ -345,6 +391,7 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                             className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                         >
                             <option value="">Selecione...</option>
+                            {/* Filter out subcategories from main category list if not already done */}
                             {categories.map((cat) => (
                                 <option key={cat.id} value={cat.slug}>{cat.name}</option>
                             ))}
@@ -352,6 +399,22 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                         {errors.category && (
                             <p className="text-red-600 text-sm mt-1">{errors.category.message}</p>
                         )}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
+                            Subcategoria (Opcional)
+                        </label>
+                        <select
+                            {...register("subCategory")}
+                            disabled={!currentCategoryId}
+                            className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-neutral-50 disabled:text-neutral-400"
+                        >
+                            <option value="">Nenhuma</option>
+                            {subCategories.map((sub) => (
+                                <option key={sub.id} value={sub.slug}>{sub.name}</option>
+                            ))}
+                        </select>
                     </div>
 
                     {/* Liga - Sports Only */}
@@ -471,47 +534,49 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
             {/* Variantes */}
             <div className="bg-white rounded-xl border border-neutral-200 p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                     <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight">
                         Variantes / Estoque
                     </h2>
                     <button
                         type="button"
                         onClick={handleAddVariant}
-                        className="flex items-center gap-2 text-primary hover:text-primary-dark font-body font-medium"
+                        className="w-fit flex items-center gap-2 text-primary hover:text-primary-dark font-body font-bold uppercase text-xs"
                     >
-                        <Plus className="w-5 h-5" />
+                        <Plus className="w-4 h-4" />
                         Adicionar
                     </button>
                 </div>
 
                 <div className="space-y-3">
                     {variants.map((variant, index) => (
-                        <div key={index} className="flex items-center gap-3">
+                        <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-neutral-50 p-3 rounded-lg sm:bg-transparent sm:p-0">
                             <input
                                 type="text"
                                 value={variant.size}
                                 onChange={(e) => handleVariantChange(index, "size", e.target.value)}
-                                className="w-40 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                className="w-full sm:w-40 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                                 placeholder={variantPlaceholder}
                             />
-                            <input
-                                type="number"
-                                value={variant.stock}
-                                onChange={(e) => handleVariantChange(index, "stock", parseInt(e.target.value) || 0)}
-                                className="flex-1 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-                                placeholder="Estoque"
-                                min="0"
-                            />
-                            {variants.length > 1 && (
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveVariant(index)}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            )}
+                            <div className="flex-1 flex gap-3 w-full">
+                                <input
+                                    type="number"
+                                    value={variant.stock}
+                                    onChange={(e) => handleVariantChange(index, "stock", parseInt(e.target.value) || 0)}
+                                    className="flex-1 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                    placeholder="Estoque"
+                                    min="0"
+                                />
+                                {variants.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveVariant(index)}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -520,14 +585,14 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             {/* Cores - Sports Only */}
             {isSports && (
                 <div className="bg-white rounded-xl border border-neutral-200 p-6">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                         <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight">
                             Cores Disponíveis
                         </h2>
                         <button
                             type="button"
                             onClick={handleAddColor}
-                            className="flex items-center gap-2 text-primary hover:text-primary-dark font-body font-medium"
+                            className="w-fit flex items-center gap-2 text-primary hover:text-primary-dark font-body font-bold uppercase text-xs"
                         >
                             <Plus className="w-5 h-5" />
                             Adicionar Cor
@@ -536,27 +601,29 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
 
                     <div className="space-y-3">
                         {colors.map((color, index) => (
-                            <div key={index} className="flex items-center gap-3">
+                            <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-3 bg-neutral-50 p-3 rounded-lg sm:bg-transparent sm:p-0">
                                 <input
                                     type="text"
                                     value={color.name}
                                     onChange={(e) => handleColorChange(index, "name", e.target.value)}
-                                    className="flex-1 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                    className="w-full sm:flex-1 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                                     placeholder="Nome da cor"
                                 />
-                                <input
-                                    type="color"
-                                    value={color.hex}
-                                    onChange={(e) => handleColorChange(index, "hex", e.target.value)}
-                                    className="w-20 h-12 border border-neutral-300 rounded-lg cursor-pointer"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveColor(index)}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
+                                <div className="flex items-center gap-3 w-full sm:w-auto">
+                                    <input
+                                        type="color"
+                                        value={color.hex}
+                                        onChange={(e) => handleColorChange(index, "hex", e.target.value)}
+                                        className="flex-1 sm:w-20 h-12 border border-neutral-300 rounded-lg cursor-pointer"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveColor(index)}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
                             </div>
                         ))}
                         {colors.length === 0 && (
@@ -664,18 +731,18 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             }
 
             {/* Actions */}
-            <div className="flex items-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4 pt-4">
                 <button
                     type="submit"
                     disabled={loading}
-                    className="bg-accent hover:bg-accent-dark disabled:bg-neutral-300 text-white px-8 py-4 rounded-lg font-heading font-bold text-lg uppercase tracking-wide transition-all hover:scale-105 hover:shadow-xl disabled:hover:scale-100 disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
+                    className="w-full sm:w-auto bg-primary hover:bg-primary-dark disabled:bg-neutral-300 text-white px-8 py-4 rounded-lg font-heading font-bold text-lg uppercase tracking-wide transition-all hover:scale-105 hover:shadow-xl disabled:hover:scale-100 disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
                 >
                     {loading ? "Salvando..." : product ? "Atualizar Produto" : "Criar Produto"}
                 </button>
                 <button
                     type="button"
                     onClick={() => router.back()}
-                    className="bg-neutral-200 hover:bg-neutral-300 text-neutral-900 px-8 py-4 rounded-lg font-body font-semibold transition-all cursor-pointer"
+                    className="w-full sm:w-auto bg-neutral-200 hover:bg-neutral-300 text-neutral-900 px-8 py-4 rounded-lg font-body font-semibold transition-all cursor-pointer"
                 >
                     Cancelar
                 </button>

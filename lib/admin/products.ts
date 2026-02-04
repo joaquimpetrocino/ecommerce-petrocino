@@ -52,49 +52,63 @@ export async function deleteProduct(id: string): Promise<boolean> {
     return result.deletedCount > 0;
 }
 
-// Filtros específicos
+// Filtros específicos (Deprecating module filter)
 export async function getProductsByModule(module: StoreModule): Promise<Product[]> {
     await connectDB();
-    const products = await ProductModel.find({ module }).lean();
+    const products = await ProductModel.find({ active: true }).lean();
     return products.map((p: any) => ({ ...p, id: p.id || p._id.toString() })) as unknown as Product[];
 }
 
 // Versão cacheada para o dashboard
 export async function getCachedProductsByModule(module: StoreModule) {
     return unstable_cache(
-        async () => getProductsByModule(module),
-        ["products-list", module],
+        async () => getAllProducts(),
+        ["products-list", "all"], // Unified cache tag
         { tags: ["products"] }
     )();
 }
 
-export async function getFeaturedProducts(module: StoreModule): Promise<Product[]> {
+export async function getFeaturedProducts(module?: StoreModule): Promise<Product[]> {
     await connectDB();
-    const products = await ProductModel.find({ module, featured: true }).lean();
+    const products = await ProductModel.find({ featured: true, active: true }).lean();
     return products.map((p: any) => ({ ...p, id: p.id || p._id.toString() })) as unknown as Product[];
 }
 
-export async function getProductsByCategory(slug: string, module: StoreModule): Promise<Product[]> {
-    // Buscar produtos onde category match o slug E module match
-    // Mas category no produto é o slug da categoria ou ID?
-    // No mock data: category: "camisas" (que é o slug/id da categoria?)
-    // No model Product, category é String.
+export async function getProductsByCategory(slug: string, module?: StoreModule): Promise<Product[]> {
     await connectDB();
-    const products = await ProductModel.find({ module, category: slug }).lean();
+    const products = await ProductModel.find({ category: slug, active: true }).lean();
     return products.map((p: any) => ({ ...p, id: p.id || p._id.toString() })) as unknown as Product[];
 }
 
-export async function getRelatedProducts(productId: string, module: StoreModule): Promise<Product[]> {
+export async function getRelatedProducts(productId: string, module?: StoreModule): Promise<Product[]> {
     await connectDB();
     const product = await ProductModel.findOne({ id: productId });
     if (!product) return [];
 
     // Buscar produtos da mesma categoria, excluindo o atual
     const related = await ProductModel.find({
-        module,
         category: product.category,
-        id: { $ne: productId }
+        id: { $ne: productId },
+        active: true
     }).limit(4).lean();
 
     return related.map((p: any) => ({ ...p, id: p.id || p._id.toString() })) as unknown as Product[];
+}
+
+export async function decrementProductStock(productId: string, variantSize: string, quantity: number): Promise<boolean> {
+    await connectDB();
+    const product = await ProductModel.findOne({ id: productId });
+
+    if (!product) return false;
+
+    const variantIndex = product.variants.findIndex((v: any) => v.size === variantSize);
+    if (variantIndex === -1) return false;
+
+    // Check if enough stock
+    if (product.variants[variantIndex].stock < quantity) return false;
+
+    product.variants[variantIndex].stock -= quantity;
+    await product.save();
+
+    return true;
 }

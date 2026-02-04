@@ -16,7 +16,7 @@ interface ProductsPageProps {
 
 async function getProducts(): Promise<Product[]> {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/products`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/products`, {
             cache: "no-store",
         });
         if (!res.ok) return [];
@@ -28,7 +28,7 @@ async function getProducts(): Promise<Product[]> {
 
 async function getCategories(): Promise<any[]> {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/categories`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/categories`, {
             cache: "no-store",
         });
         if (!res.ok) return [];

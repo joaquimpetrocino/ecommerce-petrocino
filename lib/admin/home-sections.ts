@@ -34,15 +34,11 @@ export async function getActiveSections(): Promise<HomeSection[]> {
 }
 
 export async function getSectionsByModule(module: StoreModule): Promise<HomeSection[]> {
-    await connectDB();
-    const sections = await HomeSectionModel.find({ module }).sort({ order: 1 }).lean();
-    return sections.map((s: any) => ({ ...s, id: s.id || s._id.toString() })) as unknown as HomeSection[];
+    return getAllSections();
 }
 
 export async function getActiveSectionsByModule(module: StoreModule): Promise<HomeSection[]> {
-    await connectDB();
-    const sections = await HomeSectionModel.find({ module, active: true }).sort({ order: 1 }).lean();
-    return sections.map((s: any) => ({ ...s, id: s.id || s._id.toString() })) as unknown as HomeSection[];
+    return getActiveSections();
 }
 
 export async function getSectionById(id: string): Promise<HomeSection | undefined> {

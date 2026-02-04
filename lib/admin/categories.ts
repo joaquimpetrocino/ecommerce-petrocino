@@ -64,27 +64,25 @@ export async function deleteCategory(id: string): Promise<boolean> {
     return result.deletedCount > 0;
 }
 
-// Filtrar categorias por módulo
+// Filtrar categorias por módulo (Deprecating module filter)
 export async function getCategoriesByModule(module: StoreModule): Promise<Category[]> {
-    await connectDB();
-    const categories = await CategoryModel.find({ module }).lean();
-    return categories.map((c: any) => ({ ...c, id: c.id || c._id.toString() })) as unknown as Category[];
+    return getAllCategories();
 }
 
 // Versão cacheada para o dashboard
 export async function getCachedCategoriesByModule(module: StoreModule) {
     return unstable_cache(
-        async () => getCategoriesByModule(module),
-        ["categories-list", module],
+        async () => getAllCategories(),
+        ["categories-list", "all"], // Unified cache tag
         { tags: ["categories"] }
     )();
 }
 
 // Obter categorias para exibir na navbar
-export async function getCategoriesForNavbar(module: StoreModule): Promise<Category[]> {
+export async function getCategoriesForNavbar(module?: StoreModule): Promise<Category[]> {
     await connectDB();
     // Ordenar por ordem ou nome se necessário, aqui sem ordem específica
-    const categories = await CategoryModel.find({ module, active: true, showInNavbar: true }).lean();
+    const categories = await CategoryModel.find({ active: true, showInNavbar: true }).lean();
     return categories.map((c: any) => ({ ...c, id: c.id || c._id.toString() })) as unknown as Category[];
 }
 
@@ -98,9 +96,7 @@ export async function getAllLeagues(): Promise<League[]> {
 }
 
 export async function getLeaguesByModule(module: StoreModule): Promise<League[]> {
-    await connectDB();
-    const leagues = await LeagueModel.find({ module }).lean();
-    return leagues.map((l: any) => ({ ...l, id: l.id || l._id.toString() })) as unknown as League[];
+    return getAllLeagues();
 }
 
 export async function getLeagueById(id: string): Promise<League | undefined> {

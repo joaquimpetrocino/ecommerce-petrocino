@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LayoutDashboard, Package, ShoppingBag, LogOut, Tags, Settings, Home, MessageCircle, Hash, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, LogOut, Tags, Settings, Home, MessageCircle, Hash, HelpCircle, X, ClipboardList } from "lucide-react";
 import { signOut } from "next-auth/react";
 
 const navItems = [
@@ -16,6 +16,11 @@ const navItems = [
         href: "/admin/home",
         label: "Home",
         icon: Home,
+    },
+    {
+        href: "/admin/pedidos",
+        label: "Pedidos",
+        icon: ClipboardList,
     },
     {
         href: "/admin/produtos",
@@ -59,30 +64,27 @@ const navItems = [
     },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
-    const [moduleName, setModuleName] = useState("Carregando...");
+    const [storeName, setStoreName] = useState("Carregando...");
 
     useEffect(() => {
         const fetchConfig = () => {
             fetch("/api/config")
                 .then(res => res.json())
                 .then(data => {
-                    setModuleName(data.module === "sports" ? "Artigos Esportivos" : "Peças Automotivas");
-                    // Dispara evento para outros componentes se necessário
+                    setStoreName(data.storeName || "Loja Virtual");
                 })
-                .catch(() => setModuleName("Erro ao carregar"));
+                .catch(() => setStoreName("Loja Virtual"));
         };
 
         fetchConfig();
-
-        // Escutar evento de mudança de módulo
-        window.addEventListener("moduleChanged", fetchConfig);
-
-        return () => {
-            window.removeEventListener("moduleChanged", fetchConfig);
-        };
     }, []);
 
     const handleLogout = async () => {
@@ -90,24 +92,29 @@ export function Sidebar() {
     };
 
     return (
-        <aside className="w-64 bg-white border-r border-neutral-200 h-screen sticky top-0 flex flex-col">
+        <aside
+            className={`
+                fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-neutral-200 h-screen flex flex-col transition-transform duration-300 ease-in-out
+                lg:translate-x-0 lg:fixed lg:z-40
+                ${isOpen ? "translate-x-0 shadow-xl" : "-translate-x-full"}
+            `}
+        >
             {/* Logo */}
-            <div className="p-6 border-b border-neutral-200">
+            <div className="p-6 border-b border-neutral-200 relative">
+                {/* Close Button Mobile */}
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 p-1 text-neutral-400 hover:text-red-500 lg:hidden"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+
                 <Link href="/admin" className="block">
-                    <div className="text-3xl font-heading font-bold text-primary uppercase tracking-tighter">
-                        League<span className="text-accent">Sports</span>
+                    <div className="text-3xl font-heading font-bold text-primary uppercase tracking-tighter truncate">
+                        {storeName}
                     </div>
                     <p className="text-xs text-neutral-600 font-body mt-1">Painel Admin</p>
                 </Link>
-
-                {/* Module Status */}
-                <div className="mt-4 px-3 py-2 bg-neutral-100 rounded-lg">
-                    <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1">Módulo Ativo</p>
-                    <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${moduleName.includes("Carregando") ? "bg-neutral-300 animate-pulse" : "bg-green-500"}`}></div>
-                        <p className="text-xs font-bold text-neutral-900">{moduleName}</p>
-                    </div>
-                </div>
 
                 {/* Botão Voltar para Loja */}
                 <Link
@@ -120,7 +127,7 @@ export function Sidebar() {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-1">
+            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                 {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
@@ -129,6 +136,7 @@ export function Sidebar() {
                         <Link
                             key={item.href}
                             href={item.href}
+                            onClick={() => onClose?.()} // Close sidebar on nav click (mobile)
                             className={`flex items-center gap-3 px-4 py-3 rounded-lg font-body font-medium transition-all ${isActive
                                 ? "bg-primary text-white shadow-md"
                                 : "text-neutral-700 hover:bg-neutral-100"

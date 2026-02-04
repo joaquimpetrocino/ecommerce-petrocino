@@ -1,58 +1,7 @@
 import connectDB from "@/lib/db";
 import { StoreConfig as StoreConfigModel } from "@/lib/models/store-config";
 import { unstable_noStore as noStore, revalidatePath } from "next/cache";
-
-// Configuração da loja e sistema de módulos
-export type StoreModule = "sports" | "automotive";
-
-export interface HeroConfig {
-    title: string;
-    subtitle: string;
-    bannerUrl: string;
-    badge: string;
-}
-
-export interface ModuleSettings {
-    storeName: string;
-    storeEmail: string;
-    storePhone: string;
-    storeAddress: string;
-    storeCEP?: string;
-    storeNumber?: string;
-    storeComplement?: string;
-    logoUrl?: string;
-    whatsappNumber: string;
-}
-
-export interface StoreConfig {
-    id: string;
-    module: StoreModule;
-    // Computed properties for the active module (legacy support + ease of use)
-    storeName: string;
-    storeEmail: string;
-    storePhone: string;
-    storeAddress: string;
-    storeCEP?: string;
-    storeNumber?: string;
-    storeComplement?: string;
-    logoUrl?: string;
-    whatsappNumber: string;
-
-    enableWhatsApp: boolean;
-    updatedAt: number;
-
-    // Full settings
-    settings: {
-        sports: ModuleSettings;
-        automotive: ModuleSettings;
-    };
-
-    // Configurações de Hero por módulo
-    hero: {
-        sports: HeroConfig;
-        automotive: HeroConfig;
-    };
-}
+import { StoreConfig, DEFAULT_WHATSAPP_TEMPLATE } from "@/types";
 
 // Obter configuração atual
 export async function getStoreConfig(): Promise<StoreConfig> {
@@ -61,68 +10,72 @@ export async function getStoreConfig(): Promise<StoreConfig> {
     const config = await StoreConfigModel.findOne().lean();
 
     if (!config) {
-        // Se não existir, criar padrão (ou lançar erro, mas melhor ser robusto)
-        // Por simplificação forçamos erro ou retornamos dummy se o banco estiver vazio na migration
-        throw new Error("Store config not found");
+        // Fallback robusto se não houver config no banco
+        return {
+            id: "default",
+            storeName: "Loja Virtual",
+            storeEmail: "",
+            storePhone: "",
+            storeAddress: "",
+            storeCEP: "",
+            storeNumber: "",
+            storeComplement: "",
+            logoUrl: "",
+            whatsappNumber: "",
+            enableWhatsApp: true,
+            whatsappTemplate: DEFAULT_WHATSAPP_TEMPLATE,
+            updatedAt: Date.now(),
+            module: "unified",
+            hero: {
+                title: "Bem-vindo",
+                subtitle: "Confira nossas ofertas.",
+                bannerUrl: "",
+                badge: "Loja Oficial"
+            }
+        };
     }
-
-    // Hydrate top-level fields based on active module
-    const activeModule = config.module as StoreModule;
-    const settings = config.settings || { sports: {}, automotive: {} };
-    const activeSettings = settings[activeModule] || {};
 
     return {
         ...config,
-        settings, // Ensure settings exists
-        storeName: activeSettings.storeName || "",
-        storeEmail: activeSettings.storeEmail || "",
-        storePhone: activeSettings.storePhone || "",
-        storeAddress: activeSettings.storeAddress || "",
-        storeCEP: activeSettings.storeCEP || "",
-        storeNumber: activeSettings.storeNumber || "",
-        storeComplement: activeSettings.storeComplement || "",
-        logoUrl: activeSettings.logoUrl,
-        whatsappNumber: activeSettings.whatsappNumber || "",
+        // Garantir valores padrão para strings
+        storeName: config.storeName || "Loja Virtual",
+        storeEmail: config.storeEmail || "",
+        storePhone: config.storePhone || "",
+        storeAddress: config.storeAddress || "",
+        storeCEP: config.storeCEP || "",
+        storeNumber: config.storeNumber || "",
+        storeComplement: config.storeComplement || "",
+        logoUrl: config.logoUrl || "",
+        whatsappNumber: config.whatsappNumber || "",
+        whatsappTemplate: config.whatsappTemplate || DEFAULT_WHATSAPP_TEMPLATE,
+        module: config.module || "unified",
+        hero: config.hero || {
+            title: "Bem-vindo",
+            subtitle: "Confira nossas ofertas.",
+            bannerUrl: "",
+            badge: "Loja Oficial"
+        }
     } as unknown as StoreConfig;
-}
-
-// Obter módulo ativo
-export async function getActiveModule(): Promise<StoreModule> {
-    const config = await getStoreConfig();
-    return config.module;
 }
 
 // Atualizar configuração
 export async function updateStoreConfig(updates: Partial<StoreConfig>): Promise<StoreConfig> {
     await connectDB();
 
-    // Se estivermos atualizando apenas 'module', não precisamos mexer nos settings
-    // Se estivermos enviando 'settings', salvamos direto.
-
-    // O backend simplesmente salva o que vier, assumindo que vem no formato certo do schema (settings nested)
-    // O frontend será responsável por enviar { settings: ... }
+    const finalUpdates = { ...updates, updatedAt: Date.now() };
 
     const config = await StoreConfigModel.findOneAndUpdate(
         {},
-        { ...updates, updatedAt: Date.now() },
-        { new: true }
+        finalUpdates,
+        { new: true, upsert: true }
     ).lean();
 
     if (!config) throw new Error("Failed to update config");
 
     revalidatePath("/admin", "layout");
     revalidatePath("/api/admin", "layout");
-    revalidatePath("/", "layout"); // Revalidate home as well
+    revalidatePath("/", "layout");
 
-    return getStoreConfig(); // Return hydrated config
+    return getStoreConfig();
 }
 
-// Alternar módulo
-export async function switchModule(module: StoreModule): Promise<StoreConfig> {
-    return updateStoreConfig({ module });
-}
-
-// Helper: Obter nome do módulo em português
-export function getModuleName(module: StoreModule): string {
-    return module === "sports" ? "Artigos Esportivos" : "Peças Automotivas";
-}

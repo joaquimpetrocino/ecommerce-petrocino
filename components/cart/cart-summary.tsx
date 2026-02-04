@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import { OrderItem, CustomerData } from "@/types";
 import { MessageCircle } from "lucide-react";
+import { clearCart } from "@/lib/cart";
+import { toast } from "sonner";
 
 interface CartSummaryProps {
     items: OrderItem[];
@@ -22,6 +24,8 @@ export function CartSummary({ items, total }: CartSummaryProps) {
         cep: "",
         number: "",
         complement: "",
+        paymentMethod: "",
+        installments: "1",
     });
 
     const formatPhone = (value: string) => {
@@ -71,7 +75,7 @@ export function CartSummary({ items, total }: CartSummaryProps) {
 
     const handleCheckout = async () => {
         if (!customerData.name || !customerData.phone) {
-            alert("Por favor, preencha nome e telefone.");
+            toast.error("Por favor, preencha nome e telefone.");
             return;
         }
 
@@ -99,14 +103,25 @@ export function CartSummary({ items, total }: CartSummaryProps) {
             const data = await response.json();
 
             if (data.success) {
+                // Limpar carrinho local
+                clearCart();
+                window.dispatchEvent(new Event("cart-updated"));
+
+                toast.success("Pedido gerado com sucesso!");
+
                 // Redirecionar para WhatsApp em nova aba
                 window.open(data.whatsappLink, '_blank');
+
+                // Redirecionar usuário para página de sucesso ou home após um delay para não travar a abertura da aba
+                setTimeout(() => {
+                    router.push("/");
+                }, 1000);
             } else {
-                alert("Erro ao processar pedido. Tente novamente.");
+                toast.error("Erro ao processar pedido. Tente novamente.");
             }
         } catch (error) {
             console.error("Erro no checkout:", error);
-            alert("Erro ao processar pedido. Tente novamente.");
+            toast.error("Erro ao processar pedido. Tente novamente.");
         } finally {
             setLoading(false);
         }
@@ -239,6 +254,51 @@ export function CartSummary({ items, total }: CartSummaryProps) {
                         onChange={(e) => setCustomerData({ ...customerData, complement: e.target.value })}
                     />
                 </div>
+
+                {/* Pagamento */}
+                <div className="space-y-4 pt-2">
+                    <label className="block text-sm font-body font-bold text-neutral-900 uppercase tracking-wide">
+                        Forma de Pagamento
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                        {[
+                            { id: "pix", label: "PIX" },
+                            { id: "debit", label: "Débito" },
+                            { id: "credit", label: "Crédito" }
+                        ].map(method => (
+                            <button
+                                key={method.id}
+                                type="button"
+                                onClick={() => setCustomerData({ ...customerData, paymentMethod: method.id })}
+                                className={`px-4 py-3 rounded-lg border font-heading font-bold text-xs uppercase transition-all
+                                    ${customerData.paymentMethod === method.id
+                                        ? "bg-primary border-primary text-white shadow-md scale-[1.02]"
+                                        : "bg-white border-neutral-200 text-neutral-500 hover:border-neutral-300"}`}
+                            >
+                                {method.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {customerData.paymentMethod === "credit" && (
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                            <label className="block text-xs font-body font-bold text-neutral-500 mb-2 uppercase">
+                                Parcelas (Cartão de Crédito)
+                            </label>
+                            <select
+                                value={customerData.installments}
+                                onChange={(e) => setCustomerData({ ...customerData, installments: e.target.value })}
+                                className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                            >
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                                    <option key={n} value={n}>
+                                        {n === 1 ? "À vista" : `${n}x sem juros`}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Checkout Button */}
@@ -247,7 +307,8 @@ export function CartSummary({ items, total }: CartSummaryProps) {
                 const isPhoneValid = customerData.phone.replace(/\D/g, "").length >= 10;
                 const isCepValid = (customerData.cep || "").replace(/\D/g, "").length === 8;
                 const isAddressValid = (customerData.address || "").trim().length > 5;
-                const isFormValid = isNameValid && isPhoneValid && isCepValid && isAddressValid;
+                const isPaymentValid = !!customerData.paymentMethod;
+                const isFormValid = isNameValid && isPhoneValid && isCepValid && isAddressValid && isPaymentValid;
 
                 return (
                     <button
@@ -256,7 +317,7 @@ export function CartSummary({ items, total }: CartSummaryProps) {
                         className={`w-full text-white px-8 py-4 rounded-lg font-heading font-bold text-lg uppercase tracking-wide transition-all flex items-center justify-center gap-2
                             ${loading || items.length === 0 || !isFormValid
                                 ? 'bg-neutral-300 cursor-not-allowed'
-                                : 'bg-accent hover:bg-accent-dark hover:scale-105 hover:shadow-xl cursor-pointer'
+                                : 'bg-primary hover:bg-primary-dark hover:scale-105 hover:shadow-xl cursor-pointer'
                             }`}
                     >
                         {loading ? (

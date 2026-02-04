@@ -5,14 +5,20 @@
   --background: #F8FAFC;
   --foreground: #1E293B;
 
-  /* Brand Colors */
-  --primary: #3B82F6;
-  --primary-light: #60A5FA;
-  --primary-dark: #2563EB;
+  /* Brand Colors - Red & Black Theme */
+  --primary: #DC2626;
+  /* Red 600 */
+  --primary-light: #EF4444;
+  /* Red 500 */
+  --primary-dark: #B91C1C;
+  /* Red 700 */
 
-  --accent: #F97316;
-  --accent-light: #FB923C;
-  --accent-dark: #EA580C;
+  --accent: #171717;
+  /* Neutral 900 (Black) */
+  --accent-light: #404040;
+  /* Neutral 700 */
+  --accent-dark: #000000;
+  /* Pure Black */
 
   /* Neutrals */
   --neutral-50: #F8FAFC;

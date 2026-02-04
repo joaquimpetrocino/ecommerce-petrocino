@@ -73,6 +73,7 @@ export default function CartPage() {
             const unitPrice = product.price + (hasCustomization ? (product.customizationPrice || 0) : 0);
 
             const orderItem: OrderItem = {
+                productId: product.id,
                 productName: product.name,
                 variantSize: item.variantSize,
                 quantity: item.quantity,

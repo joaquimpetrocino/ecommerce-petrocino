@@ -6,6 +6,16 @@ import connectDB from "@/lib/db";
 export async function GET() {
     await connectDB();
     const storeConfig = await getStoreConfig();
-    const brands = await Brand.find({ module: storeConfig.module, active: true }).sort({ name: 1 }).lean();
+
+    let query: any = { active: true };
+    if (storeConfig.module !== "unified") {
+        query.$or = [
+            { module: storeConfig.module },
+            { module: "unified" },
+            { module: { $exists: false } }
+        ];
+    }
+
+    const brands = await Brand.find(query).sort({ name: 1 }).lean();
     return NextResponse.json(brands.map((b: any) => ({ ...b, id: b.id })));
 }

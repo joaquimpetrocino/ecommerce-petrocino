@@ -6,7 +6,7 @@ import type { Product } from "@/types";
 
 async function getHomeData(): Promise<{ sections: HomeSection[], hero: any }> {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/home-sections`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/home-sections`, {
             cache: "no-store",
         });
         if (!res.ok) return { sections: [], hero: null };
@@ -18,7 +18,7 @@ async function getHomeData(): Promise<{ sections: HomeSection[], hero: any }> {
 
 async function getProducts(): Promise<Product[]> {
     try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/products`, {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/products`, {
             cache: "no-store",
         });
         if (!res.ok) return [];
@@ -47,23 +47,23 @@ export default async function HomePage() {
 
                 <div className="container mx-auto px-4 md:px-6 lg:px-8 py-24 md:py-36 relative z-10">
                     <div className="max-w-4xl">
-                        <div className="inline-flex items-center gap-2 bg-accent/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-accent/30">
-                            <Sparkles className="w-4 h-4 text-accent" />
-                            <span className="text-sm font-body font-semibold text-accent">{hero?.badge || "Loja Oficial"}</span>
+                        <div className="inline-flex items-center gap-2 bg-primary/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-primary/30">
+                            <Sparkles className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-body font-semibold text-primary">{hero?.badge || "Loja Oficial"}</span>
                         </div>
 
                         <h1 className="font-heading font-bold text-6xl md:text-8xl uppercase tracking-tight mb-6 leading-[0.9] text-white">
                             {hero?.title || "Sua Paixão, Nosso Jogo"}
                         </h1>
 
-                        <p className="text-xl md:text-2xl text-neutral-300 font-body mb-10 leading-relaxed max-w-2xl">
+                        <p className="text-xl md:text-2xl text-white font-body mb-10 leading-relaxed max-w-2xl">
                             {hero?.subtitle || "Os melhores artigos esportivos de futebol."}
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4">
                             <Link
                                 href="/produtos"
-                                className="inline-flex items-center justify-center gap-2 bg-accent text-white px-10 py-5 rounded-xl font-heading font-bold uppercase tracking-wide hover:bg-accent/90 transition-all shadow-2xl hover:shadow-accent/50 group text-lg"
+                                className="inline-flex items-center justify-center gap-2 bg-primary text-white px-10 py-5 rounded-xl font-heading font-bold uppercase tracking-wide hover:bg-primary-dark transition-all shadow-2xl hover:shadow-primary/50 group text-lg"
                             >
                                 Ver Produtos
                                 <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
@@ -80,8 +80,8 @@ export default async function HomePage() {
                 <div className="container mx-auto px-4 md:px-6 lg:px-8">
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
                         <div className="flex items-start gap-4 group">
-                            <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:scale-110 transition-all duration-300">
-                                <Award className="w-6 h-6 text-accent group-hover:text-white transition-colors" />
+                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                                <Award className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
                             </div>
                             <div>
                                 <h3 className="font-heading font-bold text-neutral-900 uppercase tracking-tight">Qualidade Premium</h3>
@@ -90,8 +90,8 @@ export default async function HomePage() {
                         </div>
 
                         <div className="flex items-start gap-4 group">
-                            <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:scale-110 transition-all duration-300">
-                                <ShieldCheck className="w-6 h-6 text-accent group-hover:text-white transition-colors" />
+                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                                <ShieldCheck className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
                             </div>
                             <div>
                                 <h3 className="font-heading font-bold text-neutral-900 uppercase tracking-tight">Compra Segura</h3>
@@ -100,8 +100,8 @@ export default async function HomePage() {
                         </div>
 
                         <div className="flex items-start gap-4 group">
-                            <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:scale-110 transition-all duration-300">
-                                <Truck className="w-6 h-6 text-accent group-hover:text-white transition-colors" />
+                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                                <Truck className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
                             </div>
                             <div>
                                 <h3 className="font-heading font-bold text-neutral-900 uppercase tracking-tight">Parcelamento em 12x</h3>
@@ -110,8 +110,8 @@ export default async function HomePage() {
                         </div>
 
                         <div className="flex items-start gap-4 group">
-                            <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:scale-110 transition-all duration-300">
-                                <Headphones className="w-6 h-6 text-accent group-hover:text-white transition-colors" />
+                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:scale-110 transition-all duration-300">
+                                <Headphones className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
                             </div>
                             <div>
                                 <h3 className="font-heading font-bold text-neutral-900 uppercase tracking-tight">Suporte Técnico</h3>
@@ -178,7 +178,7 @@ export default async function HomePage() {
                                 <div className="text-center mt-12 md:hidden">
                                     <Link
                                         href="/produtos"
-                                        className="inline-flex items-center gap-2 bg-accent text-white px-8 py-4 rounded-lg font-heading font-bold uppercase tracking-wide hover:bg-accent/90 transition-all"
+                                        className="inline-flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-lg font-heading font-bold uppercase tracking-wide hover:bg-primary/90 transition-all"
                                     >
                                         Ver Todos os Produtos
                                         <ChevronRight className="w-5 h-5" />
@@ -194,7 +194,7 @@ export default async function HomePage() {
                     return (
                         <section
                             key={section.id}
-                            className="relative py-20 md:py-28 overflow-hidden"
+                            className="relative py-20 md:py-28 overflow-hidden text-white"
                         >
                             {/* Imagem de fundo de futebol */}
                             <div
@@ -211,20 +211,20 @@ export default async function HomePage() {
                                 <div className="max-w-3xl mx-auto text-center">
                                     <h2 className="font-heading font-bold text-4xl md:text-6xl uppercase tracking-tight mb-4 leading-tight text-white">
                                         {section.title.split(" ").slice(0, -1).join(" ")}{" "}
-                                        <span className="text-accent">
+                                        <span className="">
                                             {section.title.split(" ").slice(-1)}
                                         </span>
                                     </h2>
 
                                     {section.description && (
-                                        <p className="text-lg md:text-xl text-neutral-300 font-body mb-8 leading-relaxed">
+                                        <p className="text-lg md:text-xl text-white font-body mb-8 leading-relaxed">
                                             {section.description}
                                         </p>
                                     )}
 
                                     <Link
                                         href={section.ctaLink || `/produtos?category=${section.categorySlug}`}
-                                        className="inline-flex items-center gap-2 bg-accent text-white px-10 py-4 rounded-lg font-heading font-bold uppercase tracking-wide hover:bg-accent/90 transition-all shadow-xl hover:shadow-2xl group"
+                                        className="inline-flex items-center gap-2 bg-primary text-white px-10 py-4 rounded-lg font-heading font-bold uppercase tracking-wide hover:bg-primary/90 transition-all shadow-xl hover:shadow-2xl group"
                                     >
                                         {section.buttonText || "Ver Produtos"}
                                         <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

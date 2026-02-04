@@ -11,7 +11,7 @@ interface ProductPageProps {
 // Buscar produto por slug
 async function getProduct(slug: string): Promise<Product | null> {
     try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
         // Infelizmente a API atual de products não filtra por Slug?
         // Vamos buscar todos e filtrar. Idealmente, criar endpoint /api/products/[slug]
         // Mas como MVP, vamos buscar e filtrar.
@@ -29,7 +29,7 @@ async function getProduct(slug: string): Promise<Product | null> {
 // Buscar produtos para recomendações
 async function getRecommendations(currentProduct: Product) {
     try {
-        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
         const res = await fetch(`${baseUrl}/api/products`, { cache: 'no-store' }); // Re-fetch ou usar cache shared se configurado
         if (!res.ok) return { related: [], complementary: [] };
 
@@ -47,10 +47,23 @@ async function getRecommendations(currentProduct: Product) {
 
         // Logica relacionados
         const related = allProducts
-            .filter((p) =>
-                p.id !== currentProduct.id &&
-                (p.category === currentProduct.category || p.league === currentProduct.league)
-            )
+            .filter((p) => p.id !== currentProduct.id)
+            .map((p) => {
+                let score = 0;
+                if (p.category === currentProduct.category) score += 5;
+                if (p.brandId && p.brandId === currentProduct.brandId) score += 4;
+                if (p.modelId && p.modelId === currentProduct.modelId) score += 3;
+                if (p.league && p.league === currentProduct.league) score += 2;
+
+                // Fallback para campos automotivos manuais
+                if (p.automotiveFields?.brand && p.automotiveFields.brand === currentProduct.automotiveFields?.brand) score += 4;
+                if (p.automotiveFields?.model && p.automotiveFields.model === currentProduct.automotiveFields?.model) score += 3;
+
+                return { product: p, score };
+            })
+            .filter(item => item.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .map(item => item.product)
             .slice(0, 4);
 
         return { related, complementary };

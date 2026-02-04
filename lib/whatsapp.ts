@@ -8,51 +8,81 @@ export interface WhatsAppCheckoutData {
 }
 
 /**
- * Formata mensagem de pedido para WhatsApp
+ * Formata mensagem de pedido para WhatsApp usando template dinâmico
  */
-export function formatWhatsAppMessage(data: WhatsAppCheckoutData): string {
+export function formatWhatsAppMessage(data: WhatsAppCheckoutData, template?: string): string {
     const { orderId, items, total, customerData } = data;
 
-    // Cabeçalho simplificado e limpo
-    let message = `*NOVO PEDIDO #${orderId}*\n`;
-    message += `───────────────────\n\n`;
+    const defaultTemplate = `*NOVO PEDIDO #{{orderId}}*
+───────────────────
 
-    // Dados do Cliente com melhor espaçamento
-    message += `*DADOS DO CLIENTE*\n`;
-    message += `*Nome:* ${customerData.name}\n`;
-    message += `*Telefone:* ${customerData.phone}\n`;
-    if (customerData.address) {
-        message += `*Endereço:* ${customerData.address}\n`;
-    }
-    message += `\n───────────────────\n\n`;
+*DADOS DO CLIENTE*
+*Nome:* {{customerName}}
+*Telefone:* {{customerPhone}}
+*Endereço:* {{customerAddress}}
 
-    // Itens do Pedido
-    message += `*ITENS DO PEDIDO*\n`;
+───────────────────
+
+*ITENS DO PEDIDO*
+{{items}}
+
+───────────────────
+
+*PAGAMENTO*
+*Método:* {{paymentMethod}}
+
+───────────────────
+
+*TOTAL: {{total}}*
+───────────────────
+_Pedido gerado via Site_`;
+
+    const activeTemplate = template || defaultTemplate;
+
+    // Formatar Itens
+    let itemsText = "";
     items.forEach((item) => {
-        message += `\n*${item.quantity}x ${item.productName}*\n`;
+        itemsText += `\n*${item.quantity}x ${item.productName}*\n`;
 
         if (item.variantSize) {
-            message += `   Tamanho: ${item.variantSize}\n`;
+            itemsText += `   Tamanho: ${item.variantSize}\n`;
         }
         if (item.customName) {
-            message += `   Nome: ${item.customName}\n`;
+            itemsText += `   Nome: ${item.customName}\n`;
         }
         if (item.customNumber) {
-            message += `   Número: ${item.customNumber}\n`;
+            itemsText += `   Número: ${item.customNumber}\n`;
         }
 
         const subtotal = item.quantity * item.unitPrice;
-        message += `   💲 ${item.quantity}x R$ ${item.unitPrice.toFixed(2)} = R$ ${subtotal.toFixed(2)}\n`;
+        itemsText += `   *${item.quantity}x R$ ${item.unitPrice.toFixed(2)} = R$ ${subtotal.toFixed(2)}*\n`;
     });
 
-    message += `\n───────────────────\n\n`;
+    // Tradução de Variáveis
+    const paymentText = customerData.paymentMethod === "credit" && customerData.installments
+        ? `Cartão de Crédito (${customerData.installments}x)`
+        : customerData.paymentMethod === "pix"
+            ? "PIX"
+            : customerData.paymentMethod === "debit"
+                ? "Cartão de Débito"
+                : "Não informado";
 
-    // Total
-    message += `*TOTAL: R$ ${total.toFixed(2)}*\n`;
-    message += `───────────────────\n`;
-    message += `_Pedido gerado via Site_`;
+    const variables: Record<string, string> = {
+        "{{orderId}}": orderId,
+        "{{customerName}}": customerData.name,
+        "{{customerPhone}}": customerData.phone,
+        "{{customerAddress}}": customerData.address || "Não informado",
+        "{{paymentMethod}}": paymentText,
+        "{{total}}": `R$ ${total.toFixed(2)}`,
+        "{{items}}": itemsText.trim()
+    };
 
-    return message;
+    let finalMessage = activeTemplate;
+    Object.keys(variables).forEach(key => {
+        finalMessage = finalMessage.replace(new RegExp(key, 'g'), variables[key]);
+    });
+
+    return finalMessage;
 }
 
 /**
@@ -60,9 +90,10 @@ export function formatWhatsAppMessage(data: WhatsAppCheckoutData): string {
  */
 export function generateWhatsAppLink(
     phoneNumber: string,
-    data: WhatsAppCheckoutData
+    data: WhatsAppCheckoutData,
+    template?: string
 ): string {
-    const message = formatWhatsAppMessage(data);
+    const message = formatWhatsAppMessage(data, template);
     const encodedMessage = encodeURIComponent(message);
 
     // Remove caracteres não numéricos do telefone

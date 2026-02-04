@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { MessageCircle, Send, User, CheckCircle } from "lucide-react";
+import { toast } from "sonner";
 
 interface Question {
     id: string;
@@ -75,11 +76,11 @@ export function ProductQA({ productId, productName, productImage }: ProductQAPro
                 setSuccess(true);
                 setFormData({ userName: "", userEmail: "", question: "", honeypot: "" });
             } else {
-                alert("Erro ao enviar pergunta. Tente novamente.");
+                toast.error("Erro ao enviar pergunta. Tente novamente.");
             }
         } catch (error) {
             console.error("Erro ao enviar pergunta:", error);
-            alert("Erro ao enviar pergunta. Tente novamente.");
+            toast.error("Erro ao enviar pergunta. Tente novamente.");
         } finally {
             setSubmitting(false);
         }
@@ -150,7 +151,7 @@ export function ProductQA({ productId, productName, productImage }: ProductQAPro
                                     className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                                     placeholder="Não será publicado"
                                 />
-                                <p className="text-xs text-neutral-500 mt-1">Usaremos apenas para notificar a resposta.</p>
+
                             </div>
                         </div>
 
@@ -180,7 +181,7 @@ export function ProductQA({ productId, productName, productImage }: ProductQAPro
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="bg-accent hover:bg-accent-dark text-white px-8 py-3 rounded-lg font-heading font-bold uppercase transition-all hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+                            className="bg-primary hover:bg-primary-dark text-white px-8 py-3 rounded-lg font-heading font-bold uppercase transition-all hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
                         >
                             {submitting ? "Enviando..." : (
                                 <>

@@ -6,12 +6,6 @@ export default function AdminLoginPage() {
     return (
         <div className="min-h-screen bg-linear-to-br from-primary via-primary-dark to-primary flex items-center justify-center p-4">
             <div className="relative w-full max-w-md">
-                <div className="text-center mb-8">
-                    <h1 className="font-heading font-bold text-white text-5xl uppercase tracking-tighter">
-                        League<span className="text-accent">Sports</span>
-                    </h1>
-                    <p className="text-white/80 font-body mt-2">Painel Administrativo</p>
-                </div>
 
                 <div className="bg-white rounded-xl shadow-2xl p-8">
                     <h2 className="font-heading font-bold text-neutral-900 text-2xl uppercase tracking-tight mb-6">
@@ -31,7 +25,7 @@ export default function AdminLoginPage() {
 
                         <button
                             type="submit"
-                            className="w-full bg-accent hover:bg-accent-dark text-white px-8 py-4 rounded-lg font-heading font-bold text-lg uppercase transition-all flex items-center justify-center gap-2 cursor-pointer"
+                            className="w-full bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-lg font-heading font-bold text-lg uppercase transition-all flex items-center justify-center gap-2 cursor-pointer"
                         >
                             <LogIn className="w-5 h-5" />
                             Entrar com Google

@@ -17,10 +17,23 @@ const barlowCondensed = Barlow_Condensed({
   variable: "--font-barlow-condensed",
 });
 
-export const metadata: Metadata = {
-  title: "LeagueSports - Artigos Esportivos de Futebol",
-  description: "Sua loja de artigos esportivos de futebol. Produtos oficiais e de qualidade.",
-};
+import { getStoreConfig } from "@/lib/admin/store-config";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getStoreConfig();
+  const storeName = config.storeName || "LeagueSports";
+  const title = `${storeName} - ${config.module === 'sports' ? 'Artigos Esportivos' : 'Peças Automotivas'}`;
+
+  return {
+    title,
+    description: config.module === 'sports'
+      ? `Sua loja oficial ${storeName}. Os melhores artigos esportivos.`
+      : `Sua loja oficial ${storeName}. As melhores peças automotivas.`,
+    icons: {
+      icon: config.logoUrl || "/favicon.ico",
+    },
+  };
+}
 
 export default function RootLayout({
   children,

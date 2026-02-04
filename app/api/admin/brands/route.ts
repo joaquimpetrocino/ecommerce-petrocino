@@ -6,10 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
     await connectDB();
-    const { searchParams } = new URL(req.url);
-    const module = searchParams.get("module") || "sports";
-
-    const brands = await Brand.find({ module, active: true }).sort({ name: 1 }).lean();
+    const brands = await Brand.find({ active: true }).sort({ name: 1 }).lean();
     return NextResponse.json(brands.map((b: any) => ({ ...b, id: b.id })));
 }
 

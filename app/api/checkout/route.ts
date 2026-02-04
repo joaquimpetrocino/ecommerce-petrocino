@@ -5,8 +5,10 @@ import { Order } from "@/types";
 import { clearCart } from "@/lib/cart";
 import { getStoreConfig } from "@/lib/admin/store-config";
 
-// Mock storage (em produção, salvar no MongoDB)
-const orders: Order[] = [];
+import { createOrder } from "@/lib/admin/orders";
+
+// Mock storage removed
+// const orders: Order[] = [];
 
 export async function POST(req: NextRequest) {
     try {
@@ -29,7 +31,6 @@ export async function POST(req: NextRequest) {
 
         // Gerar ID único
         const orderId = nanoid(10).toUpperCase();
-
         // Criar pedido
         const order: Order = {
             id: nanoid(),
@@ -42,18 +43,22 @@ export async function POST(req: NextRequest) {
             updatedAt: Date.now(),
         };
 
-        // Salvar (mock)
-        orders.push(order);
+        // Salvar no MongoDB
+        await createOrder(order);
 
         // Gerar link WhatsApp do banco de dados
         const config = await getStoreConfig();
         const whatsappNumber = config.whatsappNumber;
-        const whatsappLink = generateWhatsAppLink(whatsappNumber, {
-            orderId,
-            items,
-            total,
-            customerData,
-        });
+        const whatsappLink = generateWhatsAppLink(
+            whatsappNumber,
+            {
+                orderId,
+                items,
+                total,
+                customerData,
+            },
+            config.whatsappTemplate
+        );
 
         return NextResponse.json({
             success: true,

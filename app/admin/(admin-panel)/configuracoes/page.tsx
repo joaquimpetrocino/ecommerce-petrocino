@@ -3,23 +3,11 @@
 import { useState, useEffect } from "react";
 import { Save, Store, Mail, Package } from "lucide-react";
 import { UploadDropzone } from "@/lib/uploadthing";
-import type { StoreConfig, StoreModule, ModuleSettings, HeroConfig } from "@/lib/admin/store-config";
-
-const defaultModuleSettings: ModuleSettings = {
-    storeName: "",
-    storeEmail: "",
-    storePhone: "",
-    storeAddress: "",
-    storeCEP: "",
-    storeNumber: "",
-    storeComplement: "",
-    logoUrl: "",
-    whatsappNumber: ""
-};
+import { toast } from "sonner";
+import { StoreConfig, HeroConfig, DEFAULT_WHATSAPP_TEMPLATE } from "@/types";
 
 export default function SettingsPage() {
-    const [fullConfig, setFullConfig] = useState<StoreConfig | null>(null);
-    const [visualModule, setVisualModule] = useState<StoreModule>("sports");
+    const [config, setConfig] = useState<StoreConfig | null>(null);
     const [loading, setLoading] = useState(true);
     const [saved, setSaved] = useState(false);
 
@@ -27,30 +15,25 @@ export default function SettingsPage() {
     useEffect(() => {
         fetch("/api/admin/store-config")
             .then(res => res.json())
-            .then((config: StoreConfig) => {
-                setFullConfig(config);
-                setVisualModule(config.module);
+            .then((data: StoreConfig) => {
+                setConfig(data);
                 setLoading(false);
             })
             .catch(err => console.error(err));
     }, []);
 
     const handleSave = async () => {
-        if (saved || !fullConfig) return;
+        if (saved || !config) return;
 
         const res = await fetch("/api/admin/store-config", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                module: visualModule, // Atualiza o módulo ativo
-                settings: fullConfig.settings, // Atualiza todos os settings
-                enableWhatsApp: fullConfig.enableWhatsApp // Global
-            })
+            body: JSON.stringify(config) // Send flat config
         });
 
         if (res.ok) {
             setSaved(true);
-            window.dispatchEvent(new Event("moduleChanged"));
+            window.dispatchEvent(new Event("configChanged"));
             setTimeout(() => setSaved(false), 3000);
         }
     };
@@ -66,57 +49,34 @@ export default function SettingsPage() {
         return value.substring(0, 15);
     };
 
-    const updateCurrentSettings = (field: keyof ModuleSettings, value: string) => {
-        if (!fullConfig) return;
-
-        let formattedValue = value;
-
+    const updateConfig = (field: keyof StoreConfig, value: any) => {
+        if (!config) return;
+        let finalValue = value;
         if (field === "storePhone" || field === "whatsappNumber") {
-            formattedValue = formatPhone(value);
+            finalValue = formatPhone(value as string);
         }
-
-        const currentSettings = fullConfig.settings[visualModule] || { ...defaultModuleSettings };
-        const newSettings = { ...currentSettings, [field]: formattedValue };
-
-        setFullConfig({
-            ...fullConfig,
-            settings: {
-                ...fullConfig.settings,
-                [visualModule]: newSettings
-            }
-        });
+        setConfig({ ...config, [field]: finalValue });
     };
 
     const updateHeroConfig = (field: keyof HeroConfig, value: string) => {
-        if (!fullConfig) return;
-
-        const currentHero = fullConfig.hero[visualModule];
-        const newHero = { ...currentHero, [field]: value };
-
-        setFullConfig({
-            ...fullConfig,
-            hero: {
-                ...fullConfig.hero,
-                [visualModule]: newHero
-            }
+        if (!config) return;
+        setConfig({
+            ...config,
+            hero: { ...config.hero, [field]: value }
         });
     };
 
-    if (loading || !fullConfig) return <div>Carregando...</div>;
-
-    const currentSettings = fullConfig.settings[visualModule] || defaultModuleSettings;
-    const currentHero = fullConfig.hero[visualModule];
-    const getModuleNameDisplay = (mod: string) => mod === "sports" ? "Artigos Esportivos" : "Peças Automotivas";
+    if (loading || !config) return <div>Carregando...</div>;
 
     return (
         <div className="space-y-6 pb-20">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h1 className="font-heading font-bold text-neutral-900 text-4xl uppercase tracking-tight">
                     Configurações
                 </h1>
                 <button
                     onClick={handleSave}
-                    className="bg-accent hover:bg-accent-dark text-white px-6 py-3 rounded-lg font-heading font-bold uppercase flex items-center gap-2 transition-colors"
+                    className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-lg font-heading font-bold uppercase flex items-center justify-center gap-2 transition-colors"
                 >
                     <Save className="w-5 h-5" />
                     Salvar Alterações
@@ -129,40 +89,12 @@ export default function SettingsPage() {
                 </div>
             )}
 
-            {/* Módulo da Loja */}
-            <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-neutral-200 flex items-center gap-3">
-                    <Package className="w-5 h-5 text-primary" />
-                    <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight">
-                        Módulo da Loja (Contexto de Edição)
-                    </h2>
-                </div>
-                <div className="p-6 space-y-4">
-                    <div>
-                        <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
-                            Selecione o Módulo para Configurar e Ativar
-                        </label>
-                        <select
-                            value={visualModule}
-                            onChange={(e) => setVisualModule(e.target.value as StoreModule)}
-                            className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
-                        >
-                            <option value="sports">Artigos Esportivos</option>
-                            <option value="automotive">Peças Automotivas</option>
-                        </select>
-                        <p className="text-sm text-neutral-600 font-body mt-2">
-                            Editando configurações para: <span className="font-semibold text-primary">{getModuleNameDisplay(visualModule)}</span>
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Informações da Loja (Específico do Módulo) */}
+            {/* Informações da Loja */}
             <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
                 <div className="px-6 py-4 border-b border-neutral-200 flex items-center gap-3">
                     <Store className="w-5 h-5 text-primary" />
                     <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight">
-                        Informações da Loja ({getModuleNameDisplay(visualModule)})
+                        Informações da Loja
                     </h2>
                 </div>
                 <div className="p-6 space-y-4">
@@ -172,14 +104,10 @@ export default function SettingsPage() {
                         </label>
                         <input
                             type="text"
-                            value={currentSettings.storeName || ""}
-                            onChange={(e) => {
-                                // Validate Name: Allow letters, numbers, spaces, and basic punctuation
-                                const value = e.target.value;
-                                updateCurrentSettings("storeName", value);
-                            }}
+                            value={config.storeName || ""}
+                            onChange={(e) => updateConfig("storeName", e.target.value)}
                             className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
-                            placeholder={visualModule === "sports" ? "Ex: League Sports" : "Ex: Auto Peças League"}
+                            placeholder="Ex: Minha Loja Virtual"
                         />
                     </div>
 
@@ -190,8 +118,8 @@ export default function SettingsPage() {
                             </label>
                             <input
                                 type="email"
-                                value={currentSettings.storeEmail || ""}
-                                onChange={(e) => updateCurrentSettings("storeEmail", e.target.value)}
+                                value={config.storeEmail || ""}
+                                onChange={(e) => updateConfig("storeEmail", e.target.value)}
                                 className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                             />
                         </div>
@@ -202,8 +130,8 @@ export default function SettingsPage() {
                             </label>
                             <input
                                 type="tel"
-                                value={currentSettings.storePhone || ""}
-                                onChange={(e) => updateCurrentSettings("storePhone", e.target.value)}
+                                value={config.storePhone || ""}
+                                onChange={(e) => updateConfig("storePhone", e.target.value)}
                                 className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                                 placeholder="(11) 99999-9999"
                             />
@@ -221,10 +149,10 @@ export default function SettingsPage() {
                                 <label className="block text-xs font-body font-medium text-neutral-500 mb-1">CEP</label>
                                 <input
                                     type="text"
-                                    value={currentSettings.storeCEP || ""}
+                                    value={config.storeCEP || ""}
                                     onChange={(e) => {
                                         const cep = e.target.value.replace(/\D/g, "").substring(0, 8);
-                                        updateCurrentSettings("storeCEP", cep);
+                                        updateConfig("storeCEP", cep);
 
                                         if (cep.length === 8) {
                                             fetch(`https://viacep.com.br/ws/${cep}/json/`)
@@ -232,7 +160,7 @@ export default function SettingsPage() {
                                                 .then(data => {
                                                     if (!data.erro) {
                                                         const address = `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`;
-                                                        updateCurrentSettings("storeAddress", address);
+                                                        updateConfig("storeAddress", address);
                                                     }
                                                 })
                                                 .catch(console.error);
@@ -247,8 +175,8 @@ export default function SettingsPage() {
                                 <label className="block text-xs font-body font-medium text-neutral-500 mb-1">Número</label>
                                 <input
                                     type="text"
-                                    value={currentSettings.storeNumber || ""}
-                                    onChange={(e) => updateCurrentSettings("storeNumber", e.target.value)}
+                                    value={config.storeNumber || ""}
+                                    onChange={(e) => updateConfig("storeNumber", e.target.value)}
                                     className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                                     placeholder="123"
                                 />
@@ -259,8 +187,8 @@ export default function SettingsPage() {
                             <label className="block text-xs font-body font-medium text-neutral-500 mb-1">Endereço (Preenchido via CEP)</label>
                             <input
                                 type="text"
-                                value={currentSettings.storeAddress || ""}
-                                onChange={(e) => updateCurrentSettings("storeAddress", e.target.value)}
+                                value={config.storeAddress || ""}
+                                onChange={(e) => updateConfig("storeAddress", e.target.value)}
                                 className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none bg-neutral-50"
                                 readOnly
                             />
@@ -270,8 +198,8 @@ export default function SettingsPage() {
                             <label className="block text-xs font-body font-medium text-neutral-500 mb-1">Complemento</label>
                             <input
                                 type="text"
-                                value={currentSettings.storeComplement || ""}
-                                onChange={(e) => updateCurrentSettings("storeComplement", e.target.value)}
+                                value={config.storeComplement || ""}
+                                onChange={(e) => updateConfig("storeComplement", e.target.value)}
                                 className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                                 placeholder="Sala 1, Bloco B (Opcional)"
                             />
@@ -286,20 +214,20 @@ export default function SettingsPage() {
                 <div className="px-6 py-4 border-b border-neutral-200 flex items-center gap-3">
                     <Store className="w-5 h-5 text-primary" />
                     <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight">
-                        Logo da Loja ({getModuleNameDisplay(visualModule)})
+                        Logo da Loja
                     </h2>
                 </div>
                 <div className="p-6 space-y-4">
-                    {currentSettings.logoUrl ? (
+                    {config.logoUrl ? (
                         <div className="border border-neutral-200 rounded-lg p-6 bg-neutral-50 flex flex-col items-center gap-4">
                             <p className="text-sm font-body font-medium text-neutral-700">Logo Atual</p>
                             <img
-                                src={currentSettings.logoUrl}
+                                src={config.logoUrl}
                                 alt="Logo Preview"
                                 className="max-h-24 object-contain border border-neutral-200 rounded-lg p-2 bg-white"
                             />
                             <button
-                                onClick={() => updateCurrentSettings("logoUrl", "")}
+                                onClick={() => updateConfig("logoUrl", "")}
                                 className="text-white bg-red-600 px-4 py-2 rounded-lg text-sm font-bold uppercase hover:bg-red-700 transition-colors"
                             >
                                 Remover Logo
@@ -314,11 +242,11 @@ export default function SettingsPage() {
                                 endpoint="imageUploader"
                                 onClientUploadComplete={(res) => {
                                     if (res && res[0]) {
-                                        updateCurrentSettings("logoUrl", res[0].url);
+                                        updateConfig("logoUrl", res[0].url);
                                     }
                                 }}
                                 onUploadError={(error: Error) => {
-                                    alert(`Erro no upload: ${error.message}`);
+                                    toast.error(`Erro no upload: ${error.message}`);
                                 }}
                                 appearance={{
                                     button: "bg-primary text-white font-bold font-heading uppercase p-2 text-sm",
@@ -336,7 +264,7 @@ export default function SettingsPage() {
                 <div className="px-6 py-4 border-b border-neutral-200 flex items-center gap-3">
                     <Package className="w-5 h-5 text-accent" />
                     <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight">
-                        Banners & Home ({getModuleNameDisplay(visualModule)})
+                        Banners & Home
                     </h2>
                 </div>
                 <div className="p-6 space-y-6">
@@ -346,7 +274,7 @@ export default function SettingsPage() {
                             <label className="block text-sm font-body font-medium text-neutral-700 mb-2">Título Principal</label>
                             <input
                                 type="text"
-                                value={currentHero.title}
+                                value={config.hero.title}
                                 onChange={(e) => updateHeroConfig("title", e.target.value)}
                                 className="w-full px-4 py-2 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                             />
@@ -355,7 +283,7 @@ export default function SettingsPage() {
                             <label className="block text-sm font-body font-medium text-neutral-700 mb-2">Subtítulo</label>
                             <input
                                 type="text"
-                                value={currentHero.subtitle}
+                                value={config.hero.subtitle}
                                 onChange={(e) => updateHeroConfig("subtitle", e.target.value)}
                                 className="w-full px-4 py-2 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                             />
@@ -364,7 +292,7 @@ export default function SettingsPage() {
                             <label className="block text-sm font-body font-medium text-neutral-700 mb-2">Badge (Etiqueta)</label>
                             <input
                                 type="text"
-                                value={currentHero.badge}
+                                value={config.hero.badge}
                                 onChange={(e) => updateHeroConfig("badge", e.target.value)}
                                 className="w-full px-4 py-2 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                             />
@@ -377,9 +305,9 @@ export default function SettingsPage() {
                             <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
                                 Banner Principal (Background)
                             </label>
-                            {currentHero.bannerUrl ? (
+                            {config.hero.bannerUrl ? (
                                 <div className="relative group rounded-lg overflow-hidden h-32 w-full bg-neutral-100 border border-neutral-200">
-                                    <img src={currentHero.bannerUrl} alt="Banner" className="w-full h-full object-cover" />
+                                    <img src={config.hero.bannerUrl} alt="Banner" className="w-full h-full object-cover" />
                                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
                                             onClick={() => updateHeroConfig("bannerUrl", "")}
@@ -395,7 +323,7 @@ export default function SettingsPage() {
                                     onClientUploadComplete={(res) => {
                                         if (res && res[0]) updateHeroConfig("bannerUrl", res[0].url);
                                     }}
-                                    onUploadError={(error: Error) => alert(`Erro: ${error.message}`)}
+                                    onUploadError={(error: Error) => { toast.error(`Erro: ${error.message}`); }}
                                     appearance={{
                                         button: "bg-primary text-white font-bold font-heading uppercase p-2 text-sm",
                                         container: "p-4 border-2 border-dashed border-neutral-200 rounded-lg bg-neutral-50 h-32"
@@ -428,26 +356,65 @@ export default function SettingsPage() {
                         </div>
                         <input
                             type="checkbox"
-                            checked={fullConfig.enableWhatsApp}
-                            onChange={(e) =>
-                                setFullConfig({ ...fullConfig, enableWhatsApp: e.target.checked })
-                            }
+                            checked={config.enableWhatsApp}
+                            onChange={(e) => updateConfig("enableWhatsApp", e.target.checked)}
                             className="w-5 h-5"
                         />
                     </div>
 
-                    {fullConfig.enableWhatsApp && (
+                    {config.enableWhatsApp && (
                         <div>
                             <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
-                                Número do WhatsApp ({getModuleNameDisplay(visualModule)})
+                                Número do WhatsApp
                             </label>
                             <input
                                 type="tel"
-                                value={currentSettings.whatsappNumber || ""}
-                                onChange={(e) => updateCurrentSettings("whatsappNumber", e.target.value)}
+                                value={config.whatsappNumber || ""}
+                                onChange={(e) => updateConfig("whatsappNumber", e.target.value)}
                                 className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                                 placeholder="(11) 99999-9999"
                             />
+                        </div>
+                    )}
+
+                    {config.enableWhatsApp && (
+                        <div className="pt-4 border-t border-neutral-100">
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-sm font-body font-medium text-neutral-700">
+                                    Template da Mensagem
+                                </label>
+                                <button
+                                    onClick={() => updateConfig("whatsappTemplate", DEFAULT_WHATSAPP_TEMPLATE)}
+                                    className="text-[10px] font-bold uppercase text-primary hover:underline"
+                                >
+                                    Resetar para Padrão
+                                </button>
+                            </div>
+                            <textarea
+                                value={config.whatsappTemplate || ""}
+                                onChange={(e) => updateConfig("whatsappTemplate", e.target.value)}
+                                className="w-full h-64 px-4 py-3 border border-neutral-300 rounded-lg font-mono text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-y"
+                                placeholder="Configure aqui o layout da mensagem..."
+                            />
+                            <div className="mt-2 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+                                <p className="text-[10px] font-bold uppercase text-neutral-500 mb-2">Variáveis Disponíveis:</p>
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    {[
+                                        { v: "{{orderId}}", d: "ID do Pedido" },
+                                        { v: "{{customerName}}", d: "Nome do Cliente" },
+                                        { v: "{{customerPhone}}", d: "Telefone" },
+                                        { v: "{{customerAddress}}", d: "Endereço" },
+                                        { v: "{{paymentMethod}}", d: "Forma de Pagamento" },
+                                        { v: "{{items}}", d: "Lista de Produtos" },
+                                        { v: "{{total}}", d: "Valor Total" },
+                                    ].map(item => (
+                                        <div key={item.v} className="flex flex-col">
+                                            <code className="text-primary text-[10px] font-bold">{item.v}</code>
+                                            <span className="text-[9px] text-neutral-400 uppercase">{item.d}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>

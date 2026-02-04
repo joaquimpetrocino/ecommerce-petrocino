@@ -7,8 +7,7 @@ export async function GET(req: any) {
     const { searchParams } = new URL(req.url);
     const parentId = searchParams.get("parentId");
 
-    const storeConfig = await getStoreConfig();
-    const categories = await getCategoriesByModule(storeConfig.module);
+    const categories = await getCategoriesByModule("unified");
 
     let filtered = categories.filter((cat) => cat.active);
 

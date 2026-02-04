@@ -4,8 +4,7 @@ import { getStoreConfig } from "@/lib/admin/store-config";
 
 // API pública para obter produtos do módulo ativo
 export async function GET() {
-    const storeConfig = await getStoreConfig();
-    const products = await getProductsByModule(storeConfig.module);
+    const products = await getProductsByModule("unified");
 
     return NextResponse.json(products);
 }

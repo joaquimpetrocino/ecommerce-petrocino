@@ -1,4 +1,5 @@
 import { LucideIcon } from "lucide-react";
+import Link from "next/link";
 
 interface DashboardCardProps {
     title: string;
@@ -9,6 +10,7 @@ interface DashboardCardProps {
         positive: boolean;
     };
     color?: "primary" | "accent" | "green" | "purple";
+    href?: string;
 }
 
 const colorClasses = {
@@ -18,9 +20,9 @@ const colorClasses = {
     purple: "bg-purple-100 text-purple-700",
 };
 
-export function DashboardCard({ title, value, icon: Icon, trend, color = "primary" }: DashboardCardProps) {
-    return (
-        <div className="bg-white rounded-xl border border-neutral-200 p-6 hover:shadow-lg transition-shadow">
+export function DashboardCard({ title, value, icon: Icon, trend, color = "primary", href }: DashboardCardProps) {
+    const CardContent = (
+        <div className="bg-white rounded-xl border border-neutral-200 p-6 hover:shadow-lg transition-all hover:-translate-y-1 h-full">
             <div className="flex items-start justify-between mb-4">
                 <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
                     <Icon className="w-6 h-6" />
@@ -38,4 +40,14 @@ export function DashboardCard({ title, value, icon: Icon, trend, color = "primar
             <p className="font-heading font-bold text-neutral-900 text-3xl">{value}</p>
         </div>
     );
+
+    if (href) {
+        return (
+            <Link href={href} className="block no-underline">
+                {CardContent}
+            </Link>
+        );
+    }
+
+    return CardContent;
 }

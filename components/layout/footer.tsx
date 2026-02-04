@@ -6,7 +6,7 @@ import Ca from "zod/v4/locales/ca.js";
 
 export async function Footer() {
     const config = await getStoreConfig();
-    const storeName = config.module === "sports" ? "LeagueSports" : "AutoParts Online";
+    const storeName = config.storeName;
 
     return (
         <footer className="border-t border-neutral-200 bg-neutral-50/50">
@@ -36,9 +36,7 @@ export async function Footer() {
                             </div>
                         </Link>
                         <p className="text-neutral-500 font-body leading-relaxed max-w-sm text-base">
-                            {config.module === "sports"
-                                ? "Excelência em artigos esportivos. Produtos oficiais e qualidade garantida para sua melhor performance."
-                                : "A maior variedade de peças automotivas. Qualidade e confiança para o seu veículo em um só lugar."}
+                            {config.hero?.subtitle || "Sua loja de confiança com os melhores produtos e preços."}
                         </p>
                     </div>
 
@@ -114,7 +112,8 @@ export async function Footer() {
                                         className="text-neutral-700 hover:text-primary transition-colors leading-snug font-medium text-sm block"
                                     >
                                         {config.storeAddress}{config.storeNumber && `, ${config.storeNumber}`}
-                                        {config.storeComplement && <span className="block text-neutral-400 font-normal">{config.storeComplement}</span>}
+                                        {config.storeComplement && <span className="block text-neutral-500 font-normal">{config.storeComplement}</span>}
+                                        {config.storeCEP && <span className="block text-neutral-400 font-normal mt-1">CEP: {config.storeCEP}</span>}
                                     </a>
                                 </div>
                             </div>

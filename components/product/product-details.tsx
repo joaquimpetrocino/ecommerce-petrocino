@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ProductGallery } from "@/components/product/product-gallery";
 import { VariantSelector } from "@/components/product/variant-selector";
 import { ProductQA } from "@/components/product/product-qa";
 import { formatPrice } from "@/lib/utils";
 import { addToCart } from "@/lib/cart";
+import { toast } from "sonner";
 import { ShoppingCart, Check, ArrowLeft, Sparkles } from "lucide-react";
 import { Product } from "@/types";
 import { ProductGrid } from "@/components/product/product-grid";
@@ -26,24 +27,19 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
     const [customName, setCustomName] = useState("");
     const [customNumber, setCustomNumber] = useState("");
 
+    // Estoque Dinâmico
+    const selectedVariant = product.variants.find(v => v.size === selectedSize);
+    const availableStock = selectedVariant ? selectedVariant.stock : 0;
+
     const router = useRouter();
 
-    const categoryLabels: Record<string, string> = {
-        camisas: "Camisa",
-        chuteiras: "Chuteira",
-        acessorios: "Acessório",
-        motor: "Motor",
-        suspensao: "Suspensão",
-        freios: "Freios",
-        eletrica: "Elétrica",
-        carroceria: "Carroceria"
-    };
+    // Reset quantity if it exceeds available stock when size changes
+    useEffect(() => {
+        if (selectedSize && quantity > availableStock) {
+            setQuantity(Math.max(1, availableStock));
+        }
+    }, [selectedSize, availableStock]);
 
-    const leagueLabels: Record<string, string> = {
-        brasileirao: "Brasileirão",
-        champions: "Champions",
-        selecoes: "Seleções",
-    };
 
     const totalStock = product.variants.reduce((acc, v) => acc + v.stock, 0);
     const isOutOfStock = totalStock === 0;
@@ -54,7 +50,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
 
     const handleAddToCart = () => {
         if (!selectedSize && !isOutOfStock) {
-            alert("Por favor, selecione um tamanho");
+            toast.error("Por favor, selecione um tamanho");
             return;
         }
 
@@ -101,11 +97,11 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                     </span>
                                 )}
                                 <span className="bg-primary text-white px-4 py-1.5 rounded-full text-[11px] uppercase tracking-wider font-body font-bold shadow-sm">
-                                    {categoryLabels[product.category] || product.category}
+                                    {product.category}
                                 </span>
                                 {product.league && (
                                     <span className="bg-accent text-white px-4 py-1.5 rounded-full text-[11px] uppercase tracking-wider font-body font-bold shadow-sm">
-                                        {leagueLabels[product.league] || product.league}
+                                        {product.league}
                                     </span>
                                 )}
                             </div>
@@ -113,7 +109,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                 {product.name}
                             </h1>
                             <div className="flex items-end gap-2">
-                                <p className="text-5xl font-heading font-bold text-accent">
+                                <p className="text-5xl font-heading font-bold text-primary">
                                     {formatPrice(finalPrice)}
                                 </p>
                                 {hasCustomization && product.customizationPrice && product.customizationPrice > 0 && (
@@ -132,6 +128,32 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                 {product.description}
                             </p>
                         </div>
+
+                        {/* Cores Disponíveis */}
+                        {product.colors && product.colors.length > 0 && (
+                            <div className="border-t border-neutral-200 pt-6">
+                                <h2 className="mb-4 font-heading font-bold text-neutral-900 uppercase tracking-wide text-sm flex items-center gap-2">
+                                    Cores Disponíveis
+                                </h2>
+                                <div className="flex flex-wrap gap-3">
+                                    {product.colors.map((color, index) => (
+                                        <div
+                                            key={index}
+                                            className="group flex flex-col items-center gap-2"
+                                            title={color.name}
+                                        >
+                                            <div
+                                                className="w-10 h-10 rounded-full border border-neutral-200 shadow-sm transition-transform group-hover:scale-110"
+                                                style={{ backgroundColor: color.hex }}
+                                            />
+                                            <span className="text-[10px] font-body text-neutral-500 uppercase font-medium">
+                                                {color.name}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Seletor de Variantes */}
                         {!isOutOfStock && (
@@ -204,11 +226,22 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                     </span>
                                     <button
                                         onClick={() => setQuantity(quantity + 1)}
-                                        className="w-12 h-12 bg-neutral-100 hover:bg-neutral-200 rounded-lg font-body font-bold text-xl transition-colors"
+                                        disabled={selectedSize ? quantity >= availableStock : false}
+                                        className={`w-12 h-12 rounded-lg font-body font-bold text-xl transition-colors
+                                            ${selectedSize && quantity >= availableStock
+                                                ? "bg-neutral-50 text-neutral-300 cursor-not-allowed"
+                                                : "bg-neutral-100 hover:bg-neutral-200"}`}
                                     >
                                         +
                                     </button>
                                 </div>
+                                {selectedSize && (
+                                    <p className={`text-xs font-body font-medium ${quantity >= availableStock ? 'text-red-500 font-bold' : 'text-neutral-500'}`}>
+                                        {availableStock > 0
+                                            ? `${availableStock} unidades disponíveis`
+                                            : "Produto esgotado neste tamanho"}
+                                    </p>
+                                )}
                             </div>
                         )}
 
@@ -225,7 +258,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                 <button
                                     onClick={handleAddToCart}
                                     disabled={!selectedSize || added}
-                                    className="w-full bg-accent hover:bg-accent-dark disabled:bg-neutral-300 text-white px-8 py-4 rounded-lg font-heading font-bold text-lg uppercase tracking-wide transition-all hover:scale-105 hover:shadow-xl disabled:hover:scale-100 disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
+                                    className="w-full bg-primary hover:bg-primary-dark disabled:bg-neutral-300 text-white px-8 py-4 rounded-lg font-heading font-bold text-lg uppercase tracking-wide transition-all hover:scale-105 hover:shadow-xl disabled:hover:scale-100 disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed"
                                 >
                                     {added ? (
                                         <span className="flex items-center justify-center gap-2">
@@ -241,12 +274,6 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                 </button>
                             )}
 
-                            <button
-                                onClick={() => router.push("/carrinho")}
-                                className="w-full bg-primary hover:bg-primary-dark text-white px-8 py-4 rounded-lg font-body font-semibold text-lg transition-all hover:shadow-lg cursor-pointer"
-                            >
-                                Ver Carrinho
-                            </button>
                         </div>
                     </div>
                 </div>

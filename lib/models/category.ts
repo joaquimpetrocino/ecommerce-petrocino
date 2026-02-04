@@ -6,7 +6,7 @@ const CategorySchema = new Schema({
     slug: { type: String, required: true, unique: true },
     module: {
         type: String,
-        required: true,
+        required: false,
         enum: ["sports", "automotive"]
     },
     active: { type: Boolean, default: true },
