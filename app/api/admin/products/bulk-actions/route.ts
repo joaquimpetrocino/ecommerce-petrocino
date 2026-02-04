@@ -19,27 +19,27 @@ export async function POST(req: NextRequest) {
         }
 
         await connectDB();
-        let result;
-
+        let count = 0;
         switch (action) {
             case "delete":
-                // Utiliza deleteMany para uma operação atômica e eficiente
-                result = await ProductModel.deleteMany({ id: { $in: ids } });
+                const delRes = await ProductModel.deleteMany({ id: { $in: ids } });
+                count = delRes.deletedCount || 0;
                 break;
 
             case "activate":
-                // Utiliza updateMany para atualizar todos de uma vez
-                result = await ProductModel.updateMany(
+                const actRes = await ProductModel.updateMany(
                     { id: { $in: ids } },
                     { $set: { active: true } }
                 );
+                count = actRes.modifiedCount || 0;
                 break;
 
             case "deactivate":
-                result = await ProductModel.updateMany(
+                const deactRes = await ProductModel.updateMany(
                     { id: { $in: ids } },
                     { $set: { active: false } }
                 );
+                count = deactRes.modifiedCount || 0;
                 break;
 
             default:
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({
             success: true,
-            count: result.modifiedCount || result.deletedCount || 0
+            count
         });
 
     } catch (error) {
