@@ -17,6 +17,9 @@ export interface ModuleSettings {
     storeEmail: string;
     storePhone: string;
     storeAddress: string;
+    storeCEP?: string;
+    storeNumber?: string;
+    storeComplement?: string;
     logoUrl?: string;
     whatsappNumber: string;
 }
@@ -29,6 +32,9 @@ export interface StoreConfig {
     storeEmail: string;
     storePhone: string;
     storeAddress: string;
+    storeCEP?: string;
+    storeNumber?: string;
+    storeComplement?: string;
     logoUrl?: string;
     whatsappNumber: string;
 
@@ -72,6 +78,9 @@ export async function getStoreConfig(): Promise<StoreConfig> {
         storeEmail: activeSettings.storeEmail || "",
         storePhone: activeSettings.storePhone || "",
         storeAddress: activeSettings.storeAddress || "",
+        storeCEP: activeSettings.storeCEP || "",
+        storeNumber: activeSettings.storeNumber || "",
+        storeComplement: activeSettings.storeComplement || "",
         logoUrl: activeSettings.logoUrl,
         whatsappNumber: activeSettings.whatsappNumber || "",
     } as unknown as StoreConfig;

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { auth } from "@/auth";
 import { Sidebar } from "@/components/admin/sidebar";
 
 export default async function AdminPanelLayout({
@@ -7,10 +7,10 @@ export default async function AdminPanelLayout({
 }: {
     children: React.ReactNode;
 }) {
-    const sessionCookie = (await cookies()).get("admin_session");
+    const session = await auth();
 
-    // Se o cookie de sessão mockado não existir, manda pro login
-    if (!sessionCookie) {
+    // Se a sessão não existir, manda pro login
+    if (!session) {
         redirect("/admin/login");
     }
 

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCartItemCount } from "@/lib/cart";
+import { splitStoreName } from "@/lib/utils";
 
 interface Category {
     id: string;
@@ -16,7 +17,11 @@ export function Header() {
     const [cartCount, setCartCount] = useState(0);
     const [scrolled, setScrolled] = useState(false);
     const [categories, setCategories] = useState<Category[]>([]);
-    const [storeInfo, setStoreInfo] = useState({
+    const [storeInfo, setStoreInfo] = useState<{
+        storeName: string;
+        module: string;
+        logoUrl?: string; // Adicionado logoUrl opcional
+    }>({
         storeName: "LeagueSports",
         module: "sports"
     });
@@ -65,9 +70,7 @@ export function Header() {
     }, []);
 
     // Separar o nome para o estilo da logo (Ex: League Sports -> League e Sports)
-    const nameParts = storeInfo.storeName.split(" ");
-    const firstName = nameParts[0];
-    const restName = nameParts.slice(1).join(" ");
+    const { first, second } = splitStoreName(storeInfo.storeName);
 
     return (
         <header
@@ -77,9 +80,20 @@ export function Header() {
             <div className="container mx-auto flex h-20 items-center justify-between px-4 md:px-6 lg:px-8">
                 {/* Logo Dinâmica */}
                 <Link href="/" className="flex items-center gap-3 group">
-                    <div className="text-3xl md:text-4xl font-heading font-bold text-primary uppercase tracking-tighter transition-colors">
-                        {firstName}<span className="text-accent">{restName}</span>
-                    </div>
+                    {storeInfo.logoUrl ? (
+                        <div className="relative h-24 w-auto">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                                src={storeInfo.logoUrl}
+                                alt={storeInfo.storeName}
+                                className="h-full w-auto object-contain"
+                            />
+                        </div>
+                    ) : (
+                        <div className="text-3xl md:text-4xl font-heading font-bold text-primary uppercase tracking-tighter transition-colors">
+                            {first}{second && <span className="text-accent">{second}</span>}
+                        </div>
+                    )}
                 </Link>
 
                 {/* Navigation */}

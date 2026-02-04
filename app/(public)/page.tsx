@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ProductGrid } from "@/components/product/product-grid";
-import { ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight, Sparkles, Truck, ShieldCheck, Award, Headphones } from "lucide-react";
 import type { HomeSection } from "@/lib/admin/home-sections";
 import type { Product } from "@/types";
 
@@ -72,7 +72,54 @@ export default async function HomePage() {
                     </div>
                 </div>
 
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-linear-to-t from-neutral-50 to-transparent"></div>
+                {/* <div className="absolute bottom-0 left-0 right-0 h-20 bg-linear-to-t from-white via-white/80 to-transparent"></div> */}
+            </section>
+
+            {/* Seção de Vantagens */}
+            <section className="py-12 bg-white border-b border-neutral-100">
+                <div className="container mx-auto px-4 md:px-6 lg:px-8">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                        <div className="flex items-start gap-4 group">
+                            <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:scale-110 transition-all duration-300">
+                                <Award className="w-6 h-6 text-accent group-hover:text-white transition-colors" />
+                            </div>
+                            <div>
+                                <h3 className="font-heading font-bold text-neutral-900 uppercase tracking-tight">Qualidade Premium</h3>
+                                <p className="text-sm text-neutral-500 font-body">Produtos de alto padrão e durabilidade</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4 group">
+                            <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:scale-110 transition-all duration-300">
+                                <ShieldCheck className="w-6 h-6 text-accent group-hover:text-white transition-colors" />
+                            </div>
+                            <div>
+                                <h3 className="font-heading font-bold text-neutral-900 uppercase tracking-tight">Compra Segura</h3>
+                                <p className="text-sm text-neutral-500 font-body">Transações 100% protegidas</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4 group">
+                            <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:scale-110 transition-all duration-300">
+                                <Truck className="w-6 h-6 text-accent group-hover:text-white transition-colors" />
+                            </div>
+                            <div>
+                                <h3 className="font-heading font-bold text-neutral-900 uppercase tracking-tight">Parcelamento em 12x</h3>
+                                <p className="text-sm text-neutral-500 font-body">Facilidade no pagamento sem juros</p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-4 group">
+                            <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent group-hover:scale-110 transition-all duration-300">
+                                <Headphones className="w-6 h-6 text-accent group-hover:text-white transition-colors" />
+                            </div>
+                            <div>
+                                <h3 className="font-heading font-bold text-neutral-900 uppercase tracking-tight">Suporte Técnico</h3>
+                                <p className="text-sm text-neutral-500 font-body">Atendimento humano e especializado</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             {/* Seções Dinâmicas do Admin */}
@@ -192,19 +239,12 @@ export default async function HomePage() {
             })}
 
             {/* Fallback: Se não houver seções, mostra mensagem */}
-            {sections.length === 0 && (
+            {sections.length == 0 && (
                 <section className="py-20 bg-white">
                     <div className="container mx-auto px-4 md:px-6 lg:px-8 text-center">
                         <p className="text-neutral-600 font-body text-lg">
-                            Configure as seções da home no painel administrativo
+                            Não há produtos no momento.
                         </p>
-                        <Link
-                            href="/admin/home"
-                            className="inline-flex items-center gap-2 mt-6 bg-accent text-white px-8 py-4 rounded-lg font-heading font-bold uppercase"
-                        >
-                            Ir para Admin
-                            <ChevronRight className="w-5 h-5" />
-                        </Link>
                     </div>
                 </section>
             )}

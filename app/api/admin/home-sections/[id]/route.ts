@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getSectionById, updateSection, deleteSection } from "@/lib/admin/home-sections";
-
-async function checkAuth() {
-    const sessionCookie = (await cookies()).get("admin_session");
-    return !!sessionCookie;
-}
+import { auth } from "@/auth";
 
 export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    if (!(await checkAuth())) {
+    const session = await auth();
+    if (!session?.user?.email) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -29,7 +25,8 @@ export async function PATCH(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    if (!(await checkAuth())) {
+    const session = await auth();
+    if (!session?.user?.email) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -48,7 +45,8 @@ export async function DELETE(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    if (!(await checkAuth())) {
+    const session = await auth();
+    if (!session?.user?.email) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

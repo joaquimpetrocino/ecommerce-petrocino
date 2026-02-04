@@ -27,7 +27,6 @@ export default function AdminLoginPage() {
                     >
                         <div className="bg-neutral-50 border border-neutral-200 rounded-lg p-4 text-sm text-neutral-600 font-body mb-4">
                             <p>O acesso é restrito apenas a administradores autorizados.</p>
-                            <p className="mt-2 font-bold text-neutral-800">Email autorizado: joaquimpetrocino@gmail.com</p>
                         </div>
 
                         <button

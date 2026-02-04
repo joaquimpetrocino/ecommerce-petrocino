@@ -132,7 +132,10 @@ export function ProductQA({ productId, productName, productImage }: ProductQAPro
                                     type="text"
                                     required
                                     value={formData.userName}
-                                    onChange={(e) => setFormData({ ...formData, userName: e.target.value })}
+                                    onChange={(e) => {
+                                        const value = e.target.value.replace(/[^a-zA-Z\sÀ-ÿ]/g, "");
+                                        setFormData({ ...formData, userName: value });
+                                    }}
                                     className="w-full px-4 py-2 border border-neutral-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
                                     placeholder="Ex: Maria Silva"
                                 />

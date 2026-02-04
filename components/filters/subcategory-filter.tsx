@@ -61,10 +61,11 @@ export function SubcategoryFilter() {
 
     if (loading) return <div className="animate-pulse h-10 bg-neutral-100 rounded-lg"></div>;
     // Hide if no subcategories or no category selected (optional logic)
+
     if (subcategories.length === 0) return null;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 border-t border-neutral-100 pt-6">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full flex items-center justify-between group"

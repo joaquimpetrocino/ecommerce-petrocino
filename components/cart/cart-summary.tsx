@@ -14,11 +14,60 @@ interface CartSummaryProps {
 export function CartSummary({ items, total }: CartSummaryProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [customerData, setCustomerData] = useState<CustomerData>({
+    const [cepLoading, setCepLoading] = useState(false);
+    const [customerData, setCustomerData] = useState<CustomerData & { cep?: string; number?: string; complement?: string }>({
         name: "",
         phone: "",
         address: "",
+        cep: "",
+        number: "",
+        complement: "",
     });
+
+    const formatPhone = (value: string) => {
+        const numbers = value.replace(/\D/g, "");
+        if (numbers.length <= 11) {
+            return numbers
+                .replace(/^(\d{2})(\d)/g, "($1) $2")
+                .replace(/(\d{5})(\d)/, "$1-$2")
+                .substring(0, 15);
+        }
+        return value.substring(0, 15);
+    };
+
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const formatted = formatPhone(e.target.value);
+        setCustomerData({ ...customerData, phone: formatted });
+    };
+
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value.replace(/[^a-zA-Z\sÀ-ÿ]/g, "");
+        setCustomerData({ ...customerData, name: value });
+    };
+
+    const handleCEPChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const cep = e.target.value.replace(/\D/g, "").substring(0, 8);
+        setCustomerData({ ...customerData, cep });
+
+        if (cep.length === 8) {
+            setCepLoading(true);
+            try {
+                const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                const data = await res.json();
+                if (!data.erro) {
+                    setCustomerData(prev => ({
+                        ...prev,
+                        cep,
+                        address: `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`
+                    }));
+                }
+            } catch (error) {
+                console.error("Erro ao buscar CEP:", error);
+            } finally {
+                setCepLoading(false);
+            }
+        }
+    };
 
     const handleCheckout = async () => {
         if (!customerData.name || !customerData.phone) {
@@ -28,6 +77,11 @@ export function CartSummary({ items, total }: CartSummaryProps) {
 
         setLoading(true);
 
+        // Preparar endereço completo
+        const fullAddress = customerData.cep
+            ? `${customerData.address}, Nº ${customerData.number || 'S/N'}${customerData.complement ? ` - ${customerData.complement}` : ''} (CEP: ${customerData.cep})`
+            : customerData.address;
+
         try {
             const response = await fetch("/api/checkout", {
                 method: "POST",
@@ -35,15 +89,18 @@ export function CartSummary({ items, total }: CartSummaryProps) {
                 body: JSON.stringify({
                     items,
                     total,
-                    customerData,
+                    customerData: {
+                        ...customerData,
+                        address: fullAddress
+                    },
                 }),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                // Redirecionar para WhatsApp
-                window.location.href = data.whatsappLink;
+                // Redirecionar para WhatsApp em nova aba
+                window.open(data.whatsappLink, '_blank');
             } else {
                 alert("Erro ao processar pedido. Tente novamente.");
             }
@@ -99,12 +156,10 @@ export function CartSummary({ items, total }: CartSummaryProps) {
                     </label>
                     <input
                         type="text"
-                        placeholder="Seu nome completo"
+                        placeholder="Somente letras"
                         className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                         value={customerData.name}
-                        onChange={(e) =>
-                            setCustomerData({ ...customerData, name: e.target.value })
-                        }
+                        onChange={handleNameChange}
                         required
                     />
                 </div>
@@ -118,48 +173,108 @@ export function CartSummary({ items, total }: CartSummaryProps) {
                         placeholder="(11) 99999-9999"
                         className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                         value={customerData.phone}
-                        onChange={(e) =>
-                            setCustomerData({ ...customerData, phone: e.target.value })
-                        }
+                        onChange={handlePhoneChange}
                         required
                     />
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
+                            CEP
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="00000-000"
+                            className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
+                            value={customerData.cep}
+                            onChange={handleCEPChange}
+                            maxLength={9}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
+                            Número
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="123"
+                            className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
+                            value={customerData.number}
+                            onChange={(e) => setCustomerData({ ...customerData, number: e.target.value })}
+                        />
+                    </div>
+                </div>
+
                 <div>
                     <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
-                        Endereço (opcional)
+                        Endereço
+                    </label>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            placeholder="Rua, bairro, cidade (preenchido via CEP)"
+                            readOnly={!!customerData.cep && customerData.cep.length === 8}
+                            className={`w-full px-4 py-3 border border-neutral-300 rounded-lg font-body outline-none transition-all ${cepLoading ? 'opacity-50 cursor-wait' : ''}`}
+                            value={customerData.address}
+                            onChange={(e) => setCustomerData({ ...customerData, address: e.target.value })}
+                        />
+                        {cepLoading && (
+                            <div className="absolute right-3 top-3.5">
+                                <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-body font-medium text-neutral-700 mb-2">
+                        Complemento
                     </label>
                     <input
                         type="text"
-                        placeholder="Rua, número, bairro, cidade"
+                        placeholder="Apt, Bloco, etc"
                         className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none transition-all"
-                        value={customerData.address}
-                        onChange={(e) =>
-                            setCustomerData({ ...customerData, address: e.target.value })
-                        }
+                        value={customerData.complement}
+                        onChange={(e) => setCustomerData({ ...customerData, complement: e.target.value })}
                     />
                 </div>
             </div>
 
             {/* Checkout Button */}
-            <button
-                onClick={handleCheckout}
-                disabled={loading || items.length === 0}
-                className="w-full bg-accent hover:bg-accent-dark disabled:bg-neutral-300 text-white px-8 py-4 rounded-lg font-heading font-bold text-lg uppercase tracking-wide transition-all hover:scale-105 hover:shadow-xl disabled:hover:scale-100 disabled:hover:shadow-none cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-                {loading ? (
-                    "Processando..."
-                ) : (
-                    <>
-                        <MessageCircle className="w-6 h-6" />
-                        Finalizar via WhatsApp
-                    </>
-                )}
-            </button>
+            {(() => {
+                const isNameValid = customerData.name.trim().length >= 3;
+                const isPhoneValid = customerData.phone.replace(/\D/g, "").length >= 10;
+                const isCepValid = (customerData.cep || "").replace(/\D/g, "").length === 8;
+                const isAddressValid = (customerData.address || "").trim().length > 5;
+                const isFormValid = isNameValid && isPhoneValid && isCepValid && isAddressValid;
+
+                return (
+                    <button
+                        onClick={handleCheckout}
+                        disabled={loading || items.length === 0 || !isFormValid}
+                        className={`w-full text-white px-8 py-4 rounded-lg font-heading font-bold text-lg uppercase tracking-wide transition-all flex items-center justify-center gap-2
+                            ${loading || items.length === 0 || !isFormValid
+                                ? 'bg-neutral-300 cursor-not-allowed'
+                                : 'bg-accent hover:bg-accent-dark hover:scale-105 hover:shadow-xl cursor-pointer'
+                            }`}
+                    >
+                        {loading ? (
+                            "Processando..."
+                        ) : (
+                            <>
+                                <MessageCircle className="w-6 h-6" />
+                                Finalizar via WhatsApp
+                            </>
+                        )}
+                    </button>
+                );
+            })()}
+
 
             <p className="text-xs text-center text-neutral-500 font-body">
                 Você será redirecionado para o WhatsApp para confirmar o pedido
             </p>
-        </div>
+        </div >
     );
 }

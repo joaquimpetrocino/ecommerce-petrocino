@@ -12,6 +12,9 @@ const ModuleSettingsSchema = new Schema({
     storeEmail: { type: String, default: "" },
     storePhone: { type: String, default: "" },
     storeAddress: { type: String, default: "" },
+    storeCEP: { type: String, default: "" },
+    storeNumber: { type: String, default: "" },
+    storeComplement: { type: String, default: "" },
     logoUrl: { type: String },
     whatsappNumber: { type: String, default: "" },
 }, { _id: false });

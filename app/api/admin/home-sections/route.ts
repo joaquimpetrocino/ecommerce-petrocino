@@ -1,12 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getAllSections, createSection, reorderSections, getSectionsByModule } from "@/lib/admin/home-sections";
-
-async function checkAuth() {
-    const sessionCookie = (await cookies()).get("admin_session");
-    return !!sessionCookie;
-}
-
 import { auth } from "@/auth";
 
 export async function GET(req: NextRequest) {

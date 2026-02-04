@@ -33,7 +33,7 @@ export function ProductFiltersSidebar() {
                 <div className="bg-white rounded-2xl border border-neutral-200/60 p-6 shadow-xl shadow-neutral-200/40 lg:sticky lg:top-24 ring-1 ring-neutral-200/50">
                     <div className="flex items-center justify-between mb-8">
                         <h3 className="font-heading font-bold text-xl text-neutral-900 uppercase tracking-tight flex items-center gap-2">
-                            Filtros <span className="text-primary text-2xl">.</span>
+                            Filtros
                         </h3>
                         <button
                             onClick={() => setIsOpen(false)}
@@ -50,24 +50,17 @@ export function ProductFiltersSidebar() {
                         </div>
 
                         {/* Categoria */}
-                        <div className="border-t border-neutral-100 pt-6">
-                            <CategoryFilter />
-                        </div>
+                        <CategoryFilter />
 
                         {/* Subcategoria */}
-                        <div className="border-t border-neutral-100 pt-6">
-                            <SubcategoryFilter />
-                        </div>
+                        <SubcategoryFilter />
 
                         {/* Marca */}
-                        <div className="border-t border-neutral-100 pt-6">
-                            <BrandFilter />
-                        </div>
+                        <BrandFilter />
 
                         {/* Modelo */}
-                        <div className="border-t border-neutral-100 pt-6">
-                            <ModelFilter />
-                        </div>
+                        <ModelFilter />
+
                     </div>
                 </div>
             </aside>

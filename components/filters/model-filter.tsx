@@ -56,7 +56,7 @@ export function ModelFilter() {
     if (models.length === 0) return null;
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 border-t border-neutral-100 pt-6">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full flex items-center justify-between group"

@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { updateOrderStatus } from "@/lib/admin/orders";
-
-async function checkAuth() {
-    const sessionCookie = (await cookies()).get("admin_session");
-    return !!sessionCookie;
-}
+import { auth } from "@/auth";
 
 export async function PATCH(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
-    if (!(await checkAuth())) {
+    const session = await auth();
+    if (!session?.user?.email) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
