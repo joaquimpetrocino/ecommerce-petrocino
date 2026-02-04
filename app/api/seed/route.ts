@@ -32,7 +32,7 @@ export async function GET(req: Request) {
 
         // 2. Categories
         await Category.deleteMany({});
-        const categoriesData = getAllCategories();
+        const categoriesData = await getAllCategories();
         await Category.insertMany(categoriesData);
 
         // 3. Products
@@ -42,12 +42,12 @@ export async function GET(req: Request) {
 
         // 4. Home Sections
         await HomeSection.deleteMany({});
-        const sectionsData = getAllSections();
+        const sectionsData = await getAllSections();
         await HomeSection.insertMany(sectionsData);
 
         // 5. Questions
         await ProductQuestion.deleteMany({});
-        const questionsData = getAllQuestions();
+        const questionsData = await getAllQuestions();
         await ProductQuestion.insertMany(questionsData);
 
         return NextResponse.json({

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getCart, updateCartItem, removeFromCart } from "@/lib/cart";
 import { CartItem } from "@/components/cart/cart-item";
 import { CartSummary } from "@/components/cart/cart-summary";
-import { OrderItem } from "@/types";
+import { OrderItem, Product } from "@/types";
 import { ShoppingBag, ArrowLeft } from "lucide-react";
 
 export default function CartPage() {
@@ -18,7 +18,7 @@ export default function CartPage() {
             customNumber?: string;
         }>
     >([]);
-    const [products, setProducts] = useState<any[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -72,7 +72,7 @@ export default function CartPage() {
             const hasCustomization = !!(item.customName || item.customNumber);
             const unitPrice = product.price + (hasCustomization ? (product.customizationPrice || 0) : 0);
 
-            return {
+            const orderItem: OrderItem = {
                 productName: product.name,
                 variantSize: item.variantSize,
                 quantity: item.quantity,
@@ -80,6 +80,7 @@ export default function CartPage() {
                 customName: item.customName,
                 customNumber: item.customNumber
             };
+            return orderItem;
         })
         .filter((item): item is OrderItem => item !== null);
 

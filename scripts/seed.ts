@@ -18,7 +18,7 @@ if (!MONGODB_URI) {
 async function seed() {
     try {
         console.log("Conectando ao MongoDB...");
-        await mongoose.connect(MONGODB_URI);
+        await mongoose.connect(MONGODB_URI as string);
         console.log("Conectado!");
 
         // 1. Limpar coleções

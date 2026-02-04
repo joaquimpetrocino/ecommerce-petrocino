@@ -2,10 +2,10 @@ import { Brand } from "@/lib/models/brand";
 import connectDB from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDB();
-        const { id } = params;
+        const { id } = await params;
         const body = await req.json();
 
         const updated = await Brand.findOneAndUpdate({ id }, body, { new: true });
@@ -17,10 +17,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await connectDB();
-        const { id } = params;
+        const { id } = await params;
         await Brand.deleteOne({ id });
         return NextResponse.json({ success: true });
     } catch (error) {
