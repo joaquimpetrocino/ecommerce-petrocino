@@ -1,0 +1,29 @@
+import { Model } from "@/lib/models/model";
+import connectDB from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server";
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+    try {
+        await connectDB();
+        const { id } = params;
+        const body = await req.json();
+
+        const updated = await Model.findOneAndUpdate({ id }, body, { new: true });
+        if (!updated) return NextResponse.json({ error: "Model not found" }, { status: 404 });
+
+        return NextResponse.json(updated);
+    } catch (error) {
+        return NextResponse.json({ error: "Failed to update model" }, { status: 400 });
+    }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+    try {
+        await connectDB();
+        const { id } = params;
+        await Model.deleteOne({ id });
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        return NextResponse.json({ error: "Failed to delete model" }, { status: 400 });
+    }
+}
