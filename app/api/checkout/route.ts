@@ -29,14 +29,21 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // Sanitizar itens
+        const sanitizedItems = items.map((item: any) => ({
+            ...item,
+            unitPrice: Number(item.unitPrice) || 0,
+            customizationPrice: Number(item.customizationPrice) || 0,
+        }));
+
         // Gerar ID único
         const orderId = nanoid(10).toUpperCase();
         // Criar pedido
         const order: Order = {
             id: nanoid(),
             orderId,
-            items,
-            total,
+            items: sanitizedItems,
+            total: Number(total) || 0,
             customerData,
             status: "pendente",
             createdAt: Date.now(),

@@ -73,8 +73,9 @@ export default function CartPage() {
             if (!product) return null;
 
             const hasCustomization = !!(item.customName || item.customNumber);
-            const customizationPrice = hasCustomization ? (product.customizationPrice || 0) : 0;
-            const unitPrice = product.price + customizationPrice;
+            const prodPrice = Number(product.price) || 0;
+            const customPrice = hasCustomization ? (Number(product.customizationPrice) || 0) : 0;
+            const unitPrice = prodPrice + customPrice;
 
             const orderItem: OrderItem = {
                 productId: product.id,
@@ -82,7 +83,7 @@ export default function CartPage() {
                 variantSize: item.variantSize,
                 quantity: item.quantity,
                 unitPrice: unitPrice,
-                customizationPrice: customizationPrice,
+                customizationPrice: customPrice,
                 customName: item.customName,
                 customNumber: item.customNumber,
                 color: item.color

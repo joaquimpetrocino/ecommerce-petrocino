@@ -45,9 +45,9 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
         product?.automotiveFields || {}
     );
 
-// Selected Module (Type of product) - somente para UI
-type ModuleOption = "sports" | "automotive";
-const [selectedModule, setSelectedModule] = useState<ModuleOption>("sports");
+    // Selected Module (Type of product) - somente para UI
+    type ModuleOption = "sports" | "automotive";
+    const [selectedModule, setSelectedModule] = useState<ModuleOption>("sports");
 
     // Metadata State
     const [allCategories, setAllCategories] = useState<Category[]>([]);
@@ -145,12 +145,12 @@ const [selectedModule, setSelectedModule] = useState<ModuleOption>("sports");
         if (allCategories.length === 0) return;
 
         const currentSubs = watch("subCategories") || [];
-        
+
         if (currentSubs.length > 0) {
-             const validSubs = currentSubs.filter(subId => availableSubCategories.some(s => s.id === subId));
-             if (validSubs.length !== currentSubs.length) {
-                 setValue("subCategories", validSubs);
-             }
+            const validSubs = currentSubs.filter(subId => availableSubCategories.some(s => s.id === subId));
+            if (validSubs.length !== currentSubs.length) {
+                setValue("subCategories", validSubs);
+            }
         }
     }, [currentCategories, availableSubCategories, setValue, watch, allCategories]);
 
@@ -215,12 +215,12 @@ const [selectedModule, setSelectedModule] = useState<ModuleOption>("sports");
         try {
             // Validar cores nas variantes
             if (selectedModule === "sports" && colors.length > 0) {
-                 const missingColor = variants.some(v => v.size.trim() !== "" && !v.color);
-                 if (missingColor) {
-                     toast.error("Por favor, selecione a cor para todas as variantes ou remova as cores se não houver.");
-                     setLoading(false);
-                     return;
-                 }
+                const missingColor = variants.some(v => v.size.trim() !== "" && !v.color);
+                if (missingColor) {
+                    toast.error("Por favor, selecione a cor para todas as variantes ou remova as cores se não houver.");
+                    setLoading(false);
+                    return;
+                }
             }
 
             const productData: Product = {
@@ -385,6 +385,9 @@ const [selectedModule, setSelectedModule] = useState<ModuleOption>("sports");
                             className="w-full px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                             placeholder="0.00"
                         />
+                        <p className="text-[10px] text-neutral-400 mt-1 font-body">
+                            * Preço base do produto (sem personalização).
+                        </p>
                         {errors.price && (
                             <p className="text-red-600 text-sm mt-1">{errors.price.message}</p>
                         )}
@@ -505,7 +508,7 @@ const [selectedModule, setSelectedModule] = useState<ModuleOption>("sports");
                 )}
             </div>
 
- {isSports && (
+            {isSports && (
                 <div className="bg-white rounded-xl border border-neutral-200 p-6">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                         <h2 className="font-heading font-bold text-neutral-900 text-xl uppercase tracking-tight">
@@ -629,7 +632,7 @@ const [selectedModule, setSelectedModule] = useState<ModuleOption>("sports");
 
                 {isSports && (
                     <div className="mt-6 pt-4 border-t border-neutral-100">
-                         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                             <label className={`block text-sm font-body font-medium mb-2 sm:mb-0 ${variants.some(v => v.allowCustomization) ? 'text-neutral-700' : 'text-neutral-400'}`}>
                                 Preço da Personalização (R$)
                             </label>
@@ -641,8 +644,8 @@ const [selectedModule, setSelectedModule] = useState<ModuleOption>("sports");
                                 className="w-full sm:w-48 px-4 py-3 border border-neutral-300 rounded-lg font-body focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-neutral-100 disabled:text-neutral-400"
                                 placeholder="0.00"
                             />
-                             <p className="text-xs text-neutral-500 font-body">
-                                {variants.some(v => v.allowCustomization) 
+                            <p className="text-xs text-neutral-500 font-body">
+                                {variants.some(v => v.allowCustomization)
                                     ? "Este valor será somado ao total quando o cliente personalizar o item."
                                     : "Habilite a personalização em pelo menos uma variante acima para definir o preço."}
                             </p>
@@ -652,7 +655,7 @@ const [selectedModule, setSelectedModule] = useState<ModuleOption>("sports");
             </div>
 
             {/* Cores - Sports Only */}
-           
+
 
             {/* Personalização - Removed Global Section */}
 

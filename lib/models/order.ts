@@ -6,7 +6,7 @@ const OrderItemSchema = new Schema({
     variantSize: { type: String, required: true },
     quantity: { type: Number, required: true },
     unitPrice: { type: Number, required: true },
-    customizationPrice: { type: Number },
+    customizationPrice: { type: Number, default: 0 },
     color: { type: String },
     customName: { type: String },
     customNumber: { type: String }

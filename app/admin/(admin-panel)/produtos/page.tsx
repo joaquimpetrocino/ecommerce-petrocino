@@ -180,7 +180,9 @@ export default function AdminProductsPage() {
 
         const totalStock = p.variants.reduce((sum, v) => sum + v.stock, 0);
         const matchesInventory = filterInventory === "all" ? true :
-            filterInventory === "out" ? totalStock === 0 : totalStock > 0;
+            filterInventory === "out" ? totalStock === 0 :
+                filterInventory === "low" ? (totalStock > 0 && totalStock <= 10) :
+                    totalStock > 0;
 
         return matchesSearch && matchesStatus && matchesCategory && matchesBrand && matchesInventory;
     });
@@ -232,7 +234,7 @@ export default function AdminProductsPage() {
                         />
                     </div>
 
-                    
+
 
                     {/* Filtro por Categoria */}
                     <div className="space-y-1">
@@ -288,6 +290,7 @@ export default function AdminProductsPage() {
                         >
                             <option value="all">Todo Estoque</option>
                             <option value="in">Em Estoque</option>
+                            <option value="low">Baixo Estoque (≤10)</option>
                             <option value="out">Esgotado</option>
                         </select>
                     </div>
@@ -446,7 +449,15 @@ export default function AdminProductsPage() {
                                                 </p>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <p className="font-body text-neutral-900 text-sm">{totalStock} unid.</p>
+                                                <div className="flex flex-col">
+                                                    <p className="font-body text-neutral-900 text-sm">{totalStock} unid.</p>
+                                                    {totalStock > 0 && totalStock <= 10 && (
+                                                        <span className="text-[10px] font-bold text-orange-600 uppercase">Baixo</span>
+                                                    )}
+                                                    {totalStock === 0 && (
+                                                        <span className="text-[10px] font-bold text-red-600 uppercase">Esgotado</span>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-end gap-2">

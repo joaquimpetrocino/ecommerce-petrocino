@@ -4,7 +4,7 @@ import { StatsOverview } from "@/components/admin/stats-overview";
 
 export default function AdminDashboard() {
     return (
-        <div>
+        <div className="space-y-5">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                 <div>

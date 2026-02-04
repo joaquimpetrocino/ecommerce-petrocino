@@ -20,7 +20,7 @@ interface ProductDetailsProps {
 
 export function ProductDetails({ product, relatedProducts, complementaryProducts }: ProductDetailsProps) {
     const [selectedSize, setSelectedSize] = useState<string>("");
-    
+
     // Logic color (debounced)
     const [selectedColor, setSelectedColor] = useState<string>("");
     // Visual color (immediate)
@@ -41,7 +41,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
     // Handle Color Selection with Debounce
     const handleColorSelect = (color: string) => {
         setVisualColor(color);
-        
+
         if (colorTimeoutRef.current) {
             clearTimeout(colorTimeoutRef.current);
         }
@@ -103,7 +103,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
             toast.error("Por favor, selecione uma cor");
             return;
         }
-        
+
         if (!selectedSize && !isOutOfStock) {
             toast.error("Por favor, selecione um tamanho");
             return;
@@ -199,7 +199,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                                 className="w-10 h-10 rounded-full border border-neutral-200 shadow-sm transition-transform group-hover:scale-110"
                                                 style={{ backgroundColor: color.hex }}
                                             />
-                                            
+
                                         </button>
                                     ))}
                                 </div>
@@ -235,7 +235,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-body font-medium text-neutral-600 mb-1.5">
-                                            Nome (+R$ 0,00)
+                                            Nome
                                         </label>
                                         <input
                                             type="text"
@@ -247,7 +247,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                     </div>
                                     <div>
                                         <label className="block text-xs font-body font-medium text-neutral-600 mb-1.5">
-                                            Número (+R$ 0,00)
+                                            Número
                                         </label>
                                         <input
                                             type="text"
@@ -332,7 +332,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                         </div>
                     </div>
                 </div>
-                
+
                 {/* Related Products */}
                 <div className="mt-20">
                     <h2 className="text-3xl font-heading font-bold text-neutral-900 mb-8 uppercase tracking-tight">
