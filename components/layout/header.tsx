@@ -90,7 +90,7 @@ export function Header() {
                     {isLoading ? (
                         <div className="h-8 w-48 bg-neutral-200 animate-pulse rounded" />
                     ) : storeInfo.logoUrl ? (
-                        <div className="relative h-20 w-auto">
+                        <div className="relative h-14 md:h-20 w-auto max-w-[150px] md:max-w-none">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={storeInfo.logoUrl}

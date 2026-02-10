@@ -70,15 +70,15 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                     <>
                         <button
                             onClick={goToPrevious}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg z-10 transition-all active:scale-95 border border-neutral-100"
+                            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 sm:p-3 rounded-full shadow-lg z-10 transition-all active:scale-95 border border-neutral-100"
                         >
-                            <ChevronLeft className="h-6 w-6 text-neutral-800" />
+                            <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 text-neutral-800" />
                         </button>
                         <button
                             onClick={goToNext}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg z-10 transition-all active:scale-95 border border-neutral-100"
+                            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-2 sm:p-3 rounded-full shadow-lg z-10 transition-all active:scale-95 border border-neutral-100"
                         >
-                            <ChevronRight className="h-6 w-6 text-neutral-800" />
+                            <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-neutral-800" />
                         </button>
                     </>
                 )}
@@ -86,7 +86,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
             {/* Thumbnails Carousel */}
             {images.length > 1 && (
-                <div className="relative group mx-auto w-full max-w-lg">
+                <div className="relative group mx-auto w-full max-w-lg overflow-hidden rounded-xl">
                     {/* Botões de navegação - mais sutis e internos para evitar overflow */}
                     <button
                         onClick={() => scroll("left")}
@@ -97,7 +97,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
                     <div
                         ref={internalScrollRef}
-                        className="flex gap-2 overflow-x-auto py-2 px-10 scrollbar-hide snap-x scroll-smooth"
+                        className="flex gap-3 overflow-x-auto py-3 px-4 scrollbar-hide snap-x scroll-smooth"
                     >
                         {images.map((image, index) => (
                             <button

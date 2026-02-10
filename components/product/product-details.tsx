@@ -140,8 +140,8 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
     };
 
     return (
-        <div className="min-h-screen bg-neutral-50 py-8">
-            <div className="container mx-auto px-4 md:px-6 lg:px-8">
+        <div className="min-h-screen bg-neutral-50 py-8 overflow-x-hidden">
+            <div className="container mx-auto px-4 md:px-6 lg:px-8 max-w-full">
                 {/* Back Button */}
                 <button
                     onClick={() => router.back()}
@@ -151,14 +151,14 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                     Voltar
                 </button>
 
-                <div className="grid gap-8 lg:grid-cols-2">
+                <div className="grid gap-6 lg:gap-8 lg:grid-cols-2">
                     {/* Galeria de Imagens */}
                     <div>
                         <ProductGallery images={product.images || []} productName={product.name} />
                     </div>
 
                     {/* Informações do Produto */}
-                    <div className="space-y-6">
+                    <div className="space-y-6 overflow-hidden">
                         <div>
                             <div className="mb-4 flex flex-wrap gap-2">
                                 {isOutOfStock && (
@@ -178,7 +178,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                     </span>
                                 )}
                             </div>
-                            <h1 className="mb-4 font-heading font-bold text-neutral-900 text-3xl md:text-5xl uppercase tracking-tight leading-[0.9] wrap-break-word overflow-hidden">
+                            <h1 className="mb-4 font-heading font-bold text-neutral-900 text-3xl md:text-5xl uppercase tracking-tight leading-[0.9] break-all sm:wrap-break-word overflow-hidden max-w-full">
                                 {product.name}
                             </h1>
                             <div className="flex items-end gap-2">
