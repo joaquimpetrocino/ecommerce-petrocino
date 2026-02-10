@@ -116,10 +116,10 @@ export default function CartPage() {
                         <div className="w-32 h-32 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
                             <ShoppingBag className="w-16 h-16 text-neutral-400" />
                         </div>
-                        <h1 className="font-heading font-bold text-neutral-900 text-4xl uppercase tracking-tight mb-4">
+                        <h1 className="font-heading font-bold text-neutral-900 text-2xl md:text-3xl uppercase tracking-tight mb-4">
                             Seu Carrinho está <span className="text-accent">Vazio</span>
                         </h1>
-                        <p className="text-neutral-600 font-body text-lg mb-8">
+                        <p className="text-neutral-600 font-body text-base mb-8">
                             Adicione produtos ao carrinho para continuar comprando
                         </p>
                         <Link href="/produtos">

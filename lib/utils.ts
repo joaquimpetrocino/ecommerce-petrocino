@@ -85,3 +85,9 @@ export function splitStoreName(name: string): { first: string; second: string | 
     // 4. Sem separação
     return { first: name, second: null };
 }
+
+export function capitalizeFirstLetter(str: string): string {
+    if (!str) return "";
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+

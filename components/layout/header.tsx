@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getCartItemCount } from "@/lib/cart";
-import { splitStoreName } from "@/lib/utils";
+import { splitStoreName, capitalizeFirstLetter } from "@/lib/utils";
 
 interface Category {
     id: string;
@@ -132,9 +132,9 @@ export function Header() {
                                 <Link
                                     key={category.id}
                                     href={`/produtos?category=${category.slug}`}
-                                    className="font-body font-medium text-neutral-900 hover:text-primary transition-colors capitalize"
+                                    className="font-body font-medium text-neutral-900 hover:text-primary transition-colors"
                                 >
-                                    {category.name}
+                                    {capitalizeFirstLetter(category.name)}
                                 </Link>
                             ))}
                         </>

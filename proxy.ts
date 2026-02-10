@@ -1,23 +1,24 @@
-import { auth } from "@/auth";
-import { NextResponse } from "next/server";
+import { auth } from "@/auth"
 
 export default auth((req) => {
-    const { nextUrl, auth: session } = req;
-    const isLoggedIn = !!session;
-    const isAdminRoute = nextUrl.pathname.startsWith("/admin");
-    const isLoginRoute = nextUrl.pathname.startsWith("/admin/login");
+    const isLoggedIn = !!req.auth
+    const isOnAdminPanel = req.nextUrl.pathname.startsWith("/admin")
+    const isLoginPage = req.nextUrl.pathname.startsWith("/admin/login")
 
-    if (isAdminRoute && !isLoginRoute && !isLoggedIn) {
-        return NextResponse.redirect(new URL("/admin/login", nextUrl));
+    if (isOnAdminPanel) {
+        if (isLoginPage) {
+            if (isLoggedIn) {
+                return Response.redirect(new URL("/admin", req.nextUrl))
+            }
+            return // Allow access to login page
+        }
+
+        if (!isLoggedIn) {
+            return Response.redirect(new URL("/admin/login", req.nextUrl))
+        }
     }
-
-    if (isLoginRoute && isLoggedIn) {
-        return NextResponse.redirect(new URL("/admin", nextUrl));
-    }
-
-    return NextResponse.next();
-});
+})
 
 export const config = {
-    matcher: ["/admin/:path*", "/admin"],
-};
+    matcher: ["/admin/:path*"],
+}

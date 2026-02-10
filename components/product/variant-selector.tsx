@@ -11,7 +11,7 @@ interface VariantSelectorProps {
 
 export function VariantSelector({ variants, onSelect, selectedSize: externalSelectedSize }: VariantSelectorProps) {
     const [internalSelectedSize, setInternalSelectedSize] = useState<string>("");
-    
+
     // Use external controlled state if provided, otherwise internal state
     const selectedSize = externalSelectedSize !== undefined ? externalSelectedSize : internalSelectedSize;
 
@@ -25,7 +25,7 @@ export function VariantSelector({ variants, onSelect, selectedSize: externalSele
     return (
         <div className="space-y-3">
             <label className="font-heading font-bold text-neutral-900 uppercase tracking-wide text-sm">
-                Selecione o tamanho:
+                Selecione a variante:
             </label>
             <div className="flex flex-wrap gap-3">
                 {variants.map((variant, index) => {
@@ -38,10 +38,10 @@ export function VariantSelector({ variants, onSelect, selectedSize: externalSele
                             onClick={() => isAvailable && handleSelect(variant.size)}
                             disabled={!isAvailable}
                             className={`min-w-[60px] px-4 py-3 rounded-lg font-body font-semibold transition-all ${isSelected
-                                    ? "bg-primary text-white ring-2 ring-primary ring-offset-2 shadow-md"
-                                    : isAvailable
-                                        ? "bg-neutral-100 text-neutral-900 hover:bg-neutral-200 hover:shadow-sm"
-                                        : "bg-neutral-50 text-neutral-400 cursor-not-allowed line-through"
+                                ? "bg-primary text-white ring-2 ring-primary ring-offset-2 shadow-md"
+                                : isAvailable
+                                    ? "bg-neutral-100 text-neutral-900 hover:bg-neutral-200 hover:shadow-sm"
+                                    : "bg-neutral-50 text-neutral-400 cursor-not-allowed line-through"
                                 }`}
                         >
                             {variant.size}

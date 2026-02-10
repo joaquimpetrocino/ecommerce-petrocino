@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Plus, Images, Loader2 } from "lucide-react";
+import { X, Plus, Images, Loader2, ArrowLeft, ArrowRight } from "lucide-react";
 import { Product, ProductVariant, Category, ProductColor, AutomotiveFields } from "@/types";
 import { toast } from "sonner";
 import { UploadDropzone } from "@/lib/uploadthing";
@@ -190,6 +190,18 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
             console.error("Erro ao excluir imagem do servidor:", error);
             toast.error("Erro ao excluir arquivo de imagem, mas removido do formulário.");
         }
+    };
+
+    const handleMoveImage = (index: number, direction: "left" | "right") => {
+        const newImages = [...images];
+        if (direction === "left") {
+            if (index === 0) return;
+            [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+        } else {
+            if (index === images.length - 1) return;
+            [newImages[index + 1], newImages[index]] = [newImages[index], newImages[index + 1]];
+        }
+        setImages(newImages);
     };
 
     // Variants Helpers
@@ -493,15 +505,48 @@ export function ProductForm({ product, onSubmit }: ProductFormProps) {
                 {images.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {images.map((image, index) => (
-                            <div key={index} className="group relative aspect-square rounded-lg overflow-hidden border border-neutral-200">
+                            <div key={index} className="group relative aspect-square rounded-lg overflow-hidden border border-neutral-200 bg-neutral-100">
                                 <img src={image} alt={`Imagem ${index + 1}`} className="w-full h-full object-cover" />
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveImage(index)}
-                                    className="absolute top-2 right-2 bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
+
+                                {/* Overlay/Actions */}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                                    <div className="flex justify-between w-full">
+                                        {index === 0 && (
+                                            <span className="bg-primary text-white text-[10px] font-bold uppercase px-2 py-1 rounded shadow-sm">
+                                                Principal
+                                            </span>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveImage(index)}
+                                            className="bg-red-600 text-white p-1.5 rounded-full hover:bg-red-700 ml-auto transition-colors"
+                                            title="Remover Imagem"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+
+                                    <div className="flex justify-center gap-2 mb-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleMoveImage(index, "left")}
+                                            disabled={index === 0}
+                                            className="bg-white text-neutral-800 p-1.5 rounded-full hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            title="Mover para esquerda/cima"
+                                        >
+                                            <ArrowLeft className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleMoveImage(index, "right")}
+                                            disabled={index === images.length - 1}
+                                            className="bg-white text-neutral-800 p-1.5 rounded-full hover:bg-neutral-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                            title="Mover para direita/baixo"
+                                        >
+                                            <ArrowRight className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>

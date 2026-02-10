@@ -22,13 +22,47 @@ import { getStoreConfig } from "@/lib/admin/store-config";
 export async function generateMetadata(): Promise<Metadata> {
   const config = await getStoreConfig();
   const storeName = config.storeName || "LeagueSports";
-  const title = `${storeName}`;
+
+  /* MetadataBase é crucial para resolver URLs relativas em tags OG */
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+    ? new URL(process.env.NEXT_PUBLIC_BASE_URL)
+    : new URL("https://leaguesports.com.br");
 
   return {
-    title,
-    description: `Sua loja oficial ${storeName}.`,
+    metadataBase: baseUrl,
+    title: {
+      template: `%s | ${storeName}`,
+      default: storeName,
+    },
+    description: `Sua loja oficial ${storeName}. Os melhores artigos esportivos.`,
     icons: {
       icon: config.logoUrl || "/favicon.ico",
+    },
+    openGraph: {
+      title: storeName,
+      description: `Confira as ofertas da ${storeName}`,
+      url: baseUrl,
+      siteName: storeName,
+      locale: "pt_BR",
+      type: "website",
+      images: [
+        {
+          url: config.logoUrl || "/og-image.jpg", // Idealmente ter uma imagem padrão OG
+          width: 1200,
+          height: 630,
+          alt: storeName,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: storeName,
+      description: `Confira as ofertas da ${storeName}`,
+      images: [config.logoUrl || "/og-image.jpg"],
+    },
+    robots: {
+      index: true,
+      follow: true,
     },
   };
 }
@@ -40,7 +74,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className={`${barlow.variable} ${barlowCondensed.variable}`}>
-      <body className="antialiased font-body" suppressHydrationWarning>
+      <body className="antialiased font-body overflow-x-hidden min-w-0" suppressHydrationWarning>
         {children}
         <Toaster richColors position="top-right" />
       </body>

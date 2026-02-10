@@ -83,6 +83,7 @@ body {
   /* Use direct variable if needed by some older browsers, but next/font handles it */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 /* Utility Classes */

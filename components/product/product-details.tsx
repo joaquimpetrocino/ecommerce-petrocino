@@ -178,7 +178,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                     </span>
                                 )}
                             </div>
-                            <h1 className="mb-4 font-heading font-bold text-neutral-900 text-4xl md:text-5xl uppercase tracking-tight leading-[0.9]">
+                            <h1 className="mb-4 font-heading font-bold text-neutral-900 text-3xl md:text-5xl uppercase tracking-tight leading-[0.9] wrap-break-word overflow-hidden">
                                 {product.name}
                             </h1>
                             <div className="flex items-end gap-2">
@@ -253,7 +253,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                                         </span>
                                     )}
                                 </h2>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-xs font-body font-medium text-neutral-600 mb-1.5">
                                             Nome
