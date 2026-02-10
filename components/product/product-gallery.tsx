@@ -84,27 +84,27 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                 )}
             </div>
 
-            {/* Thumbnails Carousel */}
+            {/* Thumbnails Carousel - Showing exactly 3 items */}
             {images.length > 1 && (
-                <div className="relative group mx-auto w-full max-w-lg overflow-hidden rounded-xl">
-                    {/* Botões de navegação - mais sutis e internos para evitar overflow */}
+                <div className="relative group mx-auto w-full max-w-[280px] sm:max-w-[340px]">
+                    {/* Botão Esquerda */}
                     <button
                         onClick={() => scroll("left")}
-                        className="absolute left-1 top-1/2 -translate-y-1/2 z-20 bg-white/90 p-1.5 rounded-full shadow-md border border-neutral-100 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
+                        className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 bg-white p-2 rounded-full shadow-lg border border-neutral-100 transition-transform active:scale-90"
                     >
                         <ChevronLeft className="h-4 w-4 text-neutral-800" />
                     </button>
 
                     <div
                         ref={internalScrollRef}
-                        className="flex gap-3 overflow-x-auto py-3 px-4 scrollbar-hide snap-x scroll-smooth"
+                        className="flex gap-3 overflow-x-hidden py-3 scrollbar-hide snap-x scroll-smooth"
                     >
                         {images.map((image, index) => (
                             <button
                                 key={index}
                                 onClick={() => setCurrentIndex(index)}
-                                className={`relative h-16 w-16 sm:h-20 sm:w-20 flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all snap-center ${index === currentIndex
-                                    ? "border-primary ring-2 ring-primary/20 scale-95"
+                                className={`relative w-[calc((100%-24px)/3)] aspect-square flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all snap-center ${index === currentIndex
+                                    ? "border-primary ring-2 ring-primary/20"
                                     : "border-transparent bg-neutral-100 hover:border-neutral-300"
                                     }`}
                             >
@@ -119,9 +119,10 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                         ))}
                     </div>
 
+                    {/* Botão Direita */}
                     <button
                         onClick={() => scroll("right")}
-                        className="absolute right-1 top-1/2 -translate-y-1/2 z-20 bg-white/90 p-1.5 rounded-full shadow-md border border-neutral-100 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity"
+                        className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 bg-white p-2 rounded-full shadow-lg border border-neutral-100 transition-transform active:scale-90"
                     >
                         <ChevronRight className="h-4 w-4 text-neutral-800" />
                     </button>
