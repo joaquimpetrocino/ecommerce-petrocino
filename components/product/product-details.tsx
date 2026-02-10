@@ -151,7 +151,7 @@ export function ProductDetails({ product, relatedProducts, complementaryProducts
                     Voltar
                 </button>
 
-                <div className="grid gap-6 lg:gap-8 lg:grid-cols-2">
+                <div className="grid gap-6 lg:gap-0 lg:grid-cols-2">
                     {/* Galeria de Imagens */}
                     <div>
                         <ProductGallery images={product.images || []} productName={product.name} />
